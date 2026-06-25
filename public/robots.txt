@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://abu-imobiliare.ro/sitemap.xml
