@@ -54,7 +54,25 @@ function buildSystemPrompt(date) {
   const campActive = ca.filter(x => x.status === "Activă").length;
   const leaduri = ca.reduce((s, x) => s + (Number(x.leaduriGenerate) || 0), 0);
 
-  let prompt = `Ești un asistent AI pentru o agenție imobiliară din România. Răspunzi în limba română, concis și profesional. Ai acces la toate datele agenției.
+  const propDisp = p.filter(x => x.status === "disponibil").slice(0, 10);
+  const propDetails = propDisp.map(x =>
+    `- "${x.titlu}", ${x.tip}, ${x.tranzactie}, ${x.pret}, ${x.locatie || ""}, ${x.camere || 0} camere, ${x.suprafata || 0} mp, ${x.descriere || ""}`
+  ).join("\n");
+
+  let prompt = `Ești un asistent AI pentru o agenție imobiliară din România. Răspunzi în limba română, concis și profesionist.
+
+Poți să:
+- Analizezi datele agenției și să oferi statistici
+- Scrii descrieri imobiliare atractive și captivante
+- Ajuți cu strategii de marketing, prețuri, negociere
+- Răspunzi la orice întrebare legată de imobiliare
+- Oferi recomandări personalizate bazate pe date
+
+Când utilizatorul cere o descriere pentru o proprietate, scrie un text profesional, detaliat, cu accent pe punctele forte, zonă, finisaje și facilități. Folosește un limbaj imobiliar românesc autentic.
+
+Dacă întrebarea NU ține de datele agenției, răspunzi normal — ești un asistent general capabil să ajute cu orice.
+
+Iată datele curente ale agenției pentru context:
 
 📊 DATELE AGENȚIEI:
 
@@ -90,7 +108,10 @@ CAMPANII MARKETING (${ca.length} total):
 - Lead-uri generate: ${leaduri}
 - Buget total: ${ca.reduce((s, x) => s + (Number(x.buget) || 0), 0).toLocaleString("ro-RO")} €
 
-Răspunzi la întrebările utilizatorului analizând aceste date. Oferi recomandări practice, specifice și acționabile. Folosești formatare cu **bold** pentru cifre importante și emoji unde e relevant.`;
+Răspunzi la întrebările utilizatorului analizând aceste date. Oferi recomandări practice, specifice și acționabile. Poți folosi emoji unde e relevant, dar fără bold markdown — scrie text simplu și curat.
+
+PROPRIETĂȚI DETALIATE (primele ${propDisp.length} disponibile):
+${propDetails || "niciuna"}`;
 
   return prompt;
 }
@@ -127,7 +148,7 @@ export default function AiAssistant() {
   useEffect(() => { setDate(loadDate()); }, []);
 
   useEffect(() => {
-    const intro = `Bună! Sunt asistentul tău AI, bazat pe **DeepSeek**. Am acces la toate datele agenției tale și pot să îți ofer analize inteligente, recomandări personalizate și răspunsuri precise.\n\nPoți să mă întrebi orice despre:\n🏠 **Proprietăți** · 👥 **Clienți** · 📅 **Programări** · ✅ **Task-uri** · 💰 **Comisioane** · 📢 **Campanii**\n\nScrie o întrebare sau alege o sugestie mai jos ↓`;
+    const intro = `Bună! Sunt asistentul tău AI Imobify. Am acces la toate datele agenției tale și pot să îți ofer analize inteligente, recomandări personalizate și răspunsuri precise.\n\nPoți să mă întrebi orice despre:\n🏠 Proprietăți · 👥 Clienți · 📅 Programări · ✅ Task-uri · 💰 Comisioane · 📢 Campanii\n\nScrie o întrebare sau alege o sugestie mai jos ↓`;
     setMesaje([{ rol: "asistent", text: intro }]);
   }, []);
 
@@ -177,7 +198,9 @@ export default function AiAssistant() {
       }
 
       const data = await response.json();
-      const raspuns = data.choices?.[0]?.message?.content || "Nu am putut genera un răspuns.";
+      const raspuns = (data.choices?.[0]?.message?.content || "Nu am putut genera un răspuns.")
+        .replace(/\*\*(.*?)\*\*/g, "$1")
+        .replace(/###?\s?/g, "");
 
       setMesaje((prev) => [...prev, { rol: "asistent", text: raspuns }]);
     } catch (err) {
