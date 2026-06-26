@@ -1,9 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { proprietatiStore, clientiStore, programariStore, taskuriStore, comisioaneStore, campaniiStore } from "../data/stores";
 
-const DEEPSEEK_API = "https://api.deepseek.com/chat/completions";
-const API_KEY = import.meta.env.VITE_DEEPSEEK_API_KEY || "";
-
 const card = { background: "rgba(255,255,255,0.8)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.6)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-card)" };
 const input = { width: "100%", padding: "12px 16px", borderRadius: 12, border: "1px solid var(--border-secondary)", background: "var(--bg-primary)", color: "var(--text-primary)", outline: "none", fontSize: 13, boxSizing: "border-box" };
 
@@ -127,6 +124,8 @@ const SUGESTII_INITIALE = [
   "Distribuție pe zone",
 ];
 
+let _lastFetch = 0;
+
 export default function AiAssistant() {
   const m = useIsMobile();
   const [mesaje, setMesaje] = useState([]);
@@ -165,24 +164,11 @@ export default function AiAssistant() {
     setInputText("");
     setSeIncarca(true);
 
-    if (!API_KEY) {
-      setMesaje((prev) => [...prev, {
-        rol: "asistent",
-        text: "⚠️ **API Key DeepSeek lipsă.**\n\nAdaugă `VITE_DEEPSEEK_API_KEY` în fișierul `.env` și repornește serverul.\n\nObții un API key gratuit de la [platform.deepseek.com](https://platform.deepseek.com)."
-      }]);
-      setSeIncarca(false);
-      return;
-    }
-
     try {
-      const response = await fetch(DEEPSEEK_API, {
+      const response = await fetch("/api/deepseek", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${API_KEY}`,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "deepseek-chat",
           messages: [
             { role: "system", content: buildSystemPrompt(fresh) },
             { role: "user", content: t },
@@ -204,10 +190,10 @@ export default function AiAssistant() {
 
       setMesaje((prev) => [...prev, { rol: "asistent", text: raspuns }]);
     } catch (err) {
-      console.error("DeepSeek API error:", err);
+      console.error("AI error:", err);
       setMesaje((prev) => [...prev, {
         rol: "asistent",
-        text: `❌ **Eroare la conectarea cu DeepSeek.**\n\nVerifică cheia API și conexiunea la internet.\n\nDetalii: ${err.message}`
+        text: "❌ Eroare la conectare. Verifică `DEEPSEEK_API_KEY` în environment variables pe Vercel."
       }]);
     } finally {
       setSeIncarca(false);
@@ -226,7 +212,7 @@ export default function AiAssistant() {
         </div>
         <div>
           <div style={{ fontSize: 26, fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.5px", lineHeight: 1.1 }}>AI Assistant</div>
-          <div style={{ fontSize: 13, color: "var(--text-muted)" }}>Powered by DeepSeek — analizează datele în timp real</div>
+          <div style={{ fontSize: 13, color: "var(--text-muted)" }}>Analize inteligente în timp real</div>
         </div>
       </header>
 
@@ -254,7 +240,7 @@ export default function AiAssistant() {
           {seIncarca && (
             <div style={{ display: "flex", justifyContent: "flex-start" }}>
               <div style={{ padding: "12px 18px", borderRadius: 16, background: "var(--bg-secondary)", borderBottomLeftRadius: 4 }}>
-                <span style={{ color: "var(--text-tertiary)", fontSize: 12 }}>DeepSeek analizează...</span>
+                <span style={{ color: "var(--text-tertiary)", fontSize: 12 }}>Se analizează...</span>
               </div>
             </div>
           )}
