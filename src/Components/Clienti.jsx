@@ -12,7 +12,7 @@ const statusStyle = {
 };
 
 const page = { padding: "22px 24px" };
-const card = { background: "var(--bg-primary)", border: "0.5px solid var(--border-tertiary)", borderRadius: 14 };
+const card = { background: "rgba(255,255,255,0.8)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.6)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-card)" };
 
 function useIsMobile() {
   const [m, setM] = useState(() => typeof window !== "undefined" && window.innerWidth <= 900);
@@ -27,12 +27,11 @@ function useIsMobile() {
 const input = { width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border-secondary)", background: "var(--bg-primary)", color: "var(--text-primary)", outline: "none", fontSize: 12, boxSizing: "border-box" };
 
 function StatCard({ label, value, hint }) {
-  const m = useIsMobile();
   return (
-    <div style={{ ...card, padding: m ? "14px 15px" : "16px 18px" }}>
-      <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 8 }}>{label}</div>
-      <div style={{ fontSize: 26, fontWeight: 600, color: "var(--text-primary)", lineHeight: 1 }}>{value}</div>
-      <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 8 }}>{hint}</div>
+    <div style={{ ...card, padding: "20px 22px", transition: "all 0.3s ease" }} onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "var(--shadow-lg)"; }} onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "var(--shadow-card)"; }}>
+      <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 8, fontWeight: 500 }}>{label}</div>
+      <div style={{ fontSize: 30, fontWeight: 800, color: "var(--text-primary)", lineHeight: 1, letterSpacing: "-0.5px" }}>{value}</div>
+      <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 8 }}>{hint}</div>
     </div>
   );
 }
@@ -207,7 +206,7 @@ export default function Clienti() {
           <select style={input} value={form.status} onChange={(e) => upd("status", e.target.value)}>
             {STATUS.filter((s) => s !== "Toți").map((s) => <option key={s}>{s}</option>)}
           </select>
-          <button type="submit" style={{ gridColumn: "1 / -1", border: "none", borderRadius: 10, background: "var(--primary)", color: "white", fontWeight: 600, cursor: "pointer", fontSize: 13, padding: "11px 14px" }}>Adaugă client</button>
+          <button type="submit" style={{ gridColumn: "1 / -1", border: "none", borderRadius: 12, background: "linear-gradient(135deg, var(--primary), var(--accent))", color: "white", fontWeight: 600, cursor: "pointer", fontSize: 13, padding: "11px 14px", boxShadow: "0 4px 14px rgba(99,102,241,0.3)" }}>Adaugă client</button>
         </div>
       </form>
     );
@@ -217,8 +216,8 @@ export default function Clienti() {
     <div style={{ ...page, padding: m ? "18px 14px 28px" : "22px 24px" }}>
       <header style={{ marginBottom: 20, display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10 }}>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: "var(--text-primary)", marginBottom: 4 }}>Clienți</div>
-          <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Gestionează clienții, bugetele, zonele de interes și stadiul fiecărei discuții.</div>
+          <div style={{ fontSize: 26, fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.5px", marginBottom: 4 }}>Clienți</div>
+          <div style={{ fontSize: 13, color: "var(--text-muted)" }}>Gestionează clienții, bugetele, zonele de interes și stadiul fiecărei discuții.</div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button type="button" onClick={() => setViewMode("tabel")} style={{ padding: "7px 14px", borderRadius: 8, border: viewMode === "tabel" ? "none" : "1px solid var(--border-secondary)", background: viewMode === "tabel" ? "var(--primary)" : "var(--bg-primary)", color: viewMode === "tabel" ? "white" : "var(--text-secondary)", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>📋 Tabel</button>

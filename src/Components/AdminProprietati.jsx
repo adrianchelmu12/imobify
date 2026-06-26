@@ -88,7 +88,7 @@ function dotariObjToFacilitatiArray(obj) {
 }
 
 const page = { padding: "22px 24px" };
-const card = { background: "var(--bg-primary)", border: "0.5px solid var(--border-tertiary)", borderRadius: 14 };
+const card = { background: "rgba(255,255,255,0.8)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.6)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-card)" };
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth <= 900);
@@ -99,8 +99,7 @@ function useIsMobile() {
 const input = { width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid var(--border-secondary)", background: "var(--bg-primary)", color: "var(--text-primary)", outline: "none", fontSize: 13, boxSizing: "border-box" };
 
 function StatCard({ label, value, hint }) {
-  const m = useIsMobile();
-  return <div style={{ ...card, padding: m ? "14px 15px" : "16px 18px" }}><div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 8 }}>{label}</div><div style={{ fontSize: 26, fontWeight: 600, color: "var(--text-primary)", lineHeight: 1 }}>{value}</div><div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 8 }}>{hint}</div></div>;
+  return <div style={{ ...card, padding: "20px 22px", transition: "all 0.3s ease" }} onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "var(--shadow-lg)"; }} onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "var(--shadow-card)"; }}><div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 8, fontWeight: 500 }}>{label}</div><div style={{ fontSize: 30, fontWeight: 800, color: "var(--text-primary)", lineHeight: 1, letterSpacing: "-0.5px" }}>{value}</div><div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 8 }}>{hint}</div></div>;
 }
 
 function EField({ label, required, error, children }) {
@@ -277,7 +276,7 @@ function EditForm({ proprietate, onSave, onCancel }) {
         )}
       </ECard>
       <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
-        <button type="submit" style={{ border: "none", borderRadius: 10, background: "var(--primary)", color: "white", fontWeight: 700, cursor: "pointer", padding: "11px 18px", fontSize: 13 }}>Salvează modificările</button>
+        <button type="submit" style={{ border: "none", borderRadius: 12, background: "linear-gradient(135deg, var(--primary), var(--accent))", color: "white", fontWeight: 700, cursor: "pointer", padding: "11px 18px", fontSize: 13, boxShadow: "0 4px 14px rgba(99,102,241,0.3)" }}>Salvează modificările</button>
         <button type="button" onClick={onCancel} style={{ border: "1px solid var(--border-secondary)", borderRadius: 10, background: "var(--bg-primary)", color: "var(--text-secondary)", fontWeight: 700, cursor: "pointer", padding: "11px 18px", fontSize: 13 }}>Anulează</button>
       </div>
     </form>
@@ -326,9 +325,14 @@ export default function AdminProprietati() {
 
   return (
     <div style={{ ...page, padding: isMobile ? "18px 14px 28px" : "22px 24px" }}>
-      <header style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 22, fontWeight: 700, color: "var(--text-primary)", marginBottom: 4 }}>Proprietăți</div>
-        <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Vezi, modifică și șterge proprietățile afișate pe site.</div>
+      <header style={{ marginBottom: 28, display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ width: 42, height: 42, borderRadius: 14, background: "linear-gradient(135deg, var(--primary), var(--accent))", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 16px rgba(99,102,241,0.3)" }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        </div>
+        <div>
+          <div style={{ fontSize: 26, fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.5px", lineHeight: 1.1 }}>Proprietăți</div>
+          <div style={{ fontSize: 13, color: "var(--text-muted)" }}>Vezi, modifică și șterge proprietățile afișate pe site.</div>
+        </div>
       </header>
       <section style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)", gap: 12, marginBottom: 18 }}>
         <StatCard label="Total proprietăți" value={stats.total} hint="salvate local" />
@@ -342,7 +346,7 @@ export default function AdminProprietati() {
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 180px auto", gap: 10 }}>
             <input style={input} placeholder="Caută după titlu, locație, tip..." value={search} onChange={(e) => setSearch(e.target.value)} />
             <select style={input} value={tranzactie} onChange={(e) => setTranzactie(e.target.value)}>{STATUS_OPTIONS.map((s) => <option key={s}>{s}</option>)}</select>
-            <Link to="/admin/adauga-proprietate" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 10, background: "var(--primary)", color: "white", textDecoration: "none", fontWeight: 700, fontSize: 13, padding: isMobile ? "12px 14px" : "0 14px", whiteSpace: "nowrap" }}>+ Adaugă proprietate</Link>
+            <Link to="/admin/adauga-proprietate" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 12, background: "linear-gradient(135deg, var(--primary), var(--accent))", color: "white", textDecoration: "none", fontWeight: 700, fontSize: 13, padding: isMobile ? "12px 14px" : "0 18px", whiteSpace: "nowrap", boxShadow: "0 4px 14px rgba(99,102,241,0.3)" }}>+ Adaugă proprietate</Link>
           </div>
         </div>
         <div style={{ overflowX: "auto" }}>

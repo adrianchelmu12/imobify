@@ -6,6 +6,7 @@ import { syncAllStores } from "../data/stores";
 import { syncAgenti } from "../data/agentiStorage";
 import { fetchMyRole, isAdmin, isManagerOrAdmin } from "../lib/roleStore";
 import CreateOrganizationScreen from "./CreateOrganizationScreen";
+import NotificationBell from "./NotificationBell";
 import {
   HiOutlineSquares2X2,
   HiOutlinePlusCircle,
@@ -24,6 +25,8 @@ import {
   HiOutlinePresentationChartBar,
   HiOutlineChevronDown,
   HiOutlineUserCircle,
+  HiOutlineCog6Tooth,
+  HiOutlineArrowLeftOnRectangle,
 } from "react-icons/hi2";
 
 const NAV_SECTIONS = [
@@ -73,11 +76,19 @@ const NAV_SECTIONS = [
 ];
 
 const linkStyle = ({ isActive }) => ({
-  display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 10,
-  fontSize: 13, fontWeight: isActive ? 600 : 400, textDecoration: "none",
-  color: isActive ? "#fff" : "rgba(255,255,255,0.55)",
-  background: isActive ? "rgba(99,102,241,0.2)" : "transparent",
-  transition: "all 0.15s ease",
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  padding: "10px 12px",
+  borderRadius: 10,
+  fontSize: 14,
+  fontWeight: isActive ? 600 : 450,
+  textDecoration: "none",
+  color: isActive ? "#e2e8ff" : "rgba(218, 224, 240, 0.55)",
+  background: isActive ? "rgba(99,102,241,0.18)" : "transparent",
+  border: isActive ? "1px solid rgba(99,102,241,0.25)" : "1px solid transparent",
+  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+  flexShrink: 0,
 });
 
 function Sidebar({ mobileOpen, setMobileOpen, isMobile }) {
@@ -102,47 +113,166 @@ function Sidebar({ mobileOpen, setMobileOpen, isMobile }) {
     setCollapsed((prev) => ({ ...prev, [label]: !prev[label] }));
   };
 
+  const navContent = (
+    <>
+      <NavLink to="/admin" end onClick={() => { if (isMobile) setMobileOpen(false); }} style={linkStyle}>
+        <span style={{ width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <HiOutlineSquares2X2 size={19} />
+        </span>
+        <span style={{ flex: 1 }}>Prezentare generală</span>
+      </NavLink>
+
+      <NavLink to="/admin/adauga-proprietate" onClick={() => { if (isMobile) setMobileOpen(false); }} style={linkStyle}>
+        <span style={{ width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <HiOutlinePlusCircle size={19} />
+        </span>
+        <span style={{ flex: 1 }}>Adaugă proprietate</span>
+      </NavLink>
+
+      {roleAdmin && (
+        <NavLink to="/admin/agenti" onClick={() => { if (isMobile) setMobileOpen(false); }} style={linkStyle}>
+          <span style={{ width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <HiOutlineUserCircle size={19} />
+          </span>
+          <span style={{ flex: 1 }}>Echipă</span>
+        </NavLink>
+      )}
+
+      <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "4px 8px" }} />
+
+      {NAV_SECTIONS.filter(s => {
+        if (!roleManagerOrAdmin && (s.label === "Marketing" || s.label === "Analiză")) return false;
+        return true;
+      }).map((section) => (
+        <div key={section.label}>
+          <button
+            type="button"
+            onClick={() => toggleSection(section.label)}
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "12px 12px 6px",
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+              fontSize: 10,
+              fontWeight: 700,
+              color: "rgba(218,224,240,0.35)",
+              textTransform: "uppercase",
+              letterSpacing: "0.8px",
+            }}
+          >
+            <span style={{ flex: 1, textAlign: "left" }}>{section.label}</span>
+            <HiOutlineChevronDown
+              size={11}
+              style={{
+                transform: collapsed[section.label] ? "rotate(-90deg)" : "rotate(0deg)",
+                transition: "transform 0.2s ease",
+                flexShrink: 0,
+              }}
+            />
+          </button>
+          {!collapsed[section.label] && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              {section.items.map((item) => (
+                <NavLink
+                  key={item.label}
+                  to={item.href}
+                  onClick={() => { if (isMobile) setMobileOpen(false); }}
+                  style={linkStyle}
+                >
+                  <span style={{ width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <item.icon size={19} />
+                  </span>
+                  <span style={{ flex: 1 }}>{item.label}</span>
+                </NavLink>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </>
+  );
+
   return (
     <aside
       style={{
-        width: 240,
+        width: 250,
         maxWidth: "82vw",
         flexShrink: 0,
-        background: "var(--secondary)",
         display: "flex",
         flexDirection: "column",
         height: "100vh",
         position: isMobile ? "fixed" : "sticky",
-        left: isMobile ? (mobileOpen ? 0 : -250) : 0,
+        left: isMobile ? (mobileOpen ? 0 : -260) : 0,
         top: 0,
         alignSelf: "flex-start",
-        overflowY: "auto",
         zIndex: 1001,
         transition: "left 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-        boxShadow: isMobile && mobileOpen ? "0 25px 60px rgba(0,0,0,0.35)" : "none",
+        background: "linear-gradient(180deg, rgba(15,23,42,0.97) 0%, rgba(30,41,59,0.98) 50%, rgba(15,23,42,0.99) 100%)",
+        backdropFilter: "blur(40px)",
+        WebkitBackdropFilter: "blur(40px)",
+        borderRight: "1px solid rgba(255,255,255,0.06)",
+        boxShadow: isMobile && mobileOpen
+          ? "0 25px 60px rgba(0,0,0,0.5)"
+          : "0 0 0 1px rgba(255,255,255,0.03), 4px 0 24px rgba(0,0,0,0.1)",
       }}
     >
-      <div style={{ padding: "24px 18px 20px" }}>
+      <div
+        style={{
+          position: "absolute",
+          top: -100,
+          right: -60,
+          width: 200,
+          height: 200,
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)",
+          pointerEvents: "none",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          bottom: 80,
+          left: -40,
+          width: 160,
+          height: 160,
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%)",
+        pointerEvents: "none",
+      }}
+    />
+
+    <div style={{ position: "absolute", top: 24, right: 14, zIndex: 5 }}>
+      <NotificationBell position="top" />
+    </div>
+
+    <div style={{ padding: "28px 20px 22px", position: "relative", zIndex: 1 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {agencyLogo ? (
             <img
               src={agencyLogo}
               alt={agencyName}
-              style={{
-                width: 38, height: 38, borderRadius: 10, objectFit: "cover", flexShrink: 0,
-              }}
+              style={{ width: 40, height: 40, borderRadius: 12, objectFit: "cover", flexShrink: 0, border: "2px solid rgba(255,255,255,0.1)" }}
               onError={(e) => { e.target.style.display = "none"; }}
             />
           ) : (
             <div
               style={{
-                width: 38, height: 38, borderRadius: 12,
-                background: "linear-gradient(135deg, var(--primary), var(--primary-dark))",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                flexShrink: 0, boxShadow: "0 4px 12px rgba(99,102,241,0.4)",
+                width: 40,
+                height: 40,
+                borderRadius: 12,
+                background: "linear-gradient(135deg, var(--primary), var(--accent))",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                boxShadow: "0 4px 16px rgba(99,102,241,0.4), 0 0 40px rgba(99,102,241,0.15)",
               }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="3" width="7" height="7" rx="1.5" />
                 <rect x="14" y="3" width="7" height="7" rx="1.5" />
                 <rect x="3" y="14" width="7" height="7" rx="1.5" />
@@ -150,158 +280,55 @@ function Sidebar({ mobileOpen, setMobileOpen, isMobile }) {
               </svg>
             </div>
           )}
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140 }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#f1f5f9", lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 145 }}>
               {agencyName}
             </div>
-            <div style={{ fontSize: 10, fontWeight: 500, color: "rgba(255,255,255,0.45)", letterSpacing: "0.6px", textTransform: "uppercase" }}>
-              CRM
+            <div style={{ fontSize: 10, fontWeight: 600, color: "rgba(99,102,241,0.7)", letterSpacing: "0.8px", textTransform: "uppercase", marginTop: 2 }}>
+              Imobify CRM
             </div>
           </div>
           {isMobile && (
             <button type="button" onClick={() => setMobileOpen(false)}
-              style={{ border: "none", background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)", width: 30, height: 30, borderRadius: 8, fontSize: 18, cursor: "pointer", lineHeight: 1, marginLeft: "auto" }}>
+              style={{
+                border: "none",
+                background: "rgba(255,255,255,0.08)",
+                color: "rgba(255,255,255,0.7)",
+                width: 30,
+                height: 30,
+                borderRadius: 8,
+                fontSize: 18,
+                cursor: "pointer",
+                lineHeight: 1,
+                marginLeft: "auto",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}>
               ×
             </button>
           )}
         </div>
       </div>
 
-      <nav style={{ flex: 1, padding: "4px 10px", overflowY: "auto", display: "flex", flexDirection: "column", gap: 1 }}>
-        <NavLink
-          to="/admin"
-          end
-          onClick={() => { if (isMobile) setMobileOpen(false); }}
-          style={linkStyle}
-        >
-          <span style={{ width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <HiOutlineSquares2X2 size={19} />
-          </span>
-          <span style={{ flex: 1 }}>Prezentare generală</span>
-        </NavLink>
-
-        <NavLink
-          to="/admin/adauga-proprietate"
-          onClick={() => { if (isMobile) setMobileOpen(false); }}
-          style={linkStyle}
-        >
-          <span style={{ width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <HiOutlinePlusCircle size={19} />
-          </span>
-          <span style={{ flex: 1 }}>Adaugă proprietate</span>
-        </NavLink>
-
-        {roleAdmin && (
-          <NavLink
-            to="/admin/agenti"
-            onClick={() => { if (isMobile) setMobileOpen(false); }}
-            style={linkStyle}
-          >
-            <span style={{ width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <HiOutlineUserCircle size={19} />
-            </span>
-            <span style={{ flex: 1 }}>Echipă</span>
-          </NavLink>
-        )}
-
-        {NAV_SECTIONS.filter(s => {
-          if (!roleManagerOrAdmin && (s.label === "Marketing" || s.label === "Analiză")) return false;
-          return true;
-        }).map((section) => (
-          <div key={section.label}>
-            <button
-              type="button"
-              onClick={() => toggleSection(section.label)}
-              style={{
-                width: "100%",
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "10px 10px 6px",
-                border: "none",
-                background: "transparent",
-                cursor: "pointer",
-                fontSize: 10,
-                fontWeight: 700,
-                color: "rgba(255,255,255,0.3)",
-                textTransform: "uppercase",
-                letterSpacing: "0.8px",
-              }}
-            >
-              <span style={{ flex: 1, textAlign: "left" }}>{section.label}</span>
-              <HiOutlineChevronDown
-                size={12}
-                style={{
-                  transform: collapsed[section.label] ? "rotate(-90deg)" : "rotate(0deg)",
-                  transition: "transform 0.2s ease",
-                  flexShrink: 0,
-                }}
-              />
-            </button>
-            {!collapsed[section.label] && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                {section.items.map((item) => (
-                  <NavLink
-                    key={item.label}
-                    to={item.href}
-                    onClick={() => { if (isMobile) setMobileOpen(false); }}
-                    style={linkStyle}
-                  >
-                    <span style={{ width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <item.icon size={19} />
-                    </span>
-                    <span style={{ flex: 1 }}>{item.label}</span>
-                  </NavLink>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
+      <nav style={{ flex: 1, padding: "2px 10px", overflowY: "auto", display: "flex", flexDirection: "column", gap: 2, position: "relative", zIndex: 1 }}>
+        {navContent}
       </nav>
 
-      <div style={{ padding: "10px 16px", borderTop: "0.5px solid rgba(255,255,255,0.08)" }}>
-        <a
-          href="https://landing-nu-ochre-22.vercel.app/dashboard"
-          style={{
-            display: "flex", alignItems: "center", gap: 8,
-            padding: "8px 10px", borderRadius: 10,
-            fontSize: 12, fontWeight: 500, textDecoration: "none",
-            color: "rgba(255,255,255,0.45)",
-            border: "0.5px solid rgba(255,255,255,0.08)",
-            transition: "all 0.15s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = "#fff";
-            e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = "rgba(255,255,255,0.45)";
-            e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
-          }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-          Pagina principală
-        </a>
-      </div>
-
-      <div style={{ padding: "12px 16px 16px", borderTop: "0.5px solid rgba(255,255,255,0.08)" }}>
+      <div style={{ padding: "12px 14px 14px", borderTop: "1px solid rgba(255,255,255,0.06)", position: "relative", zIndex: 1 }}>
         {user && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <img
                 src={user.imageUrl}
                 alt={user.fullName || user.username || ""}
-                style={{
-                  width: 34, height: 34, borderRadius: "50%", objectFit: "cover", flexShrink: 0,
-                }}
+                style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover", flexShrink: 0, border: "2px solid rgba(255,255,255,0.1)" }}
               />
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: "#e2e8f0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {user.fullName || user.username || "Utilizator"}
                 </div>
-                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {user.primaryEmailAddress?.emailAddress || ""}
                 </div>
               </div>
@@ -311,29 +338,34 @@ function Sidebar({ mobileOpen, setMobileOpen, isMobile }) {
                 type="button"
                 style={{
                   width: "100%",
-                  border: "0.5px solid rgba(255,255,255,0.15)",
-                  background: "rgba(255,255,255,0.06)",
-                  color: "rgba(255,255,255,0.6)",
-                  fontSize: 11,
-                  fontWeight: 600,
-                  padding: "7px 0",
-                  borderRadius: 8,
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  background: "rgba(255,255,255,0.04)",
+                  color: "rgba(255,255,255,0.55)",
+                  fontSize: 11.5,
+                  fontWeight: 500,
+                  padding: "8px 0",
+                  borderRadius: 10,
                   cursor: "pointer",
                   whiteSpace: "nowrap",
-                  transition: "all 0.15s ease",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  transition: "all 0.2s ease",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(239,68,68,0.2)";
+                  e.currentTarget.style.background = "rgba(239,68,68,0.15)";
                   e.currentTarget.style.color = "#fca5a5";
                   e.currentTarget.style.borderColor = "rgba(239,68,68,0.3)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "rgba(255,255,255,0.06)";
-                  e.currentTarget.style.color = "rgba(255,255,255,0.6)";
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)";
+                  e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                  e.currentTarget.style.color = "rgba(255,255,255,0.55)";
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
                 }}
               >
-                Ieși
+                <HiOutlineArrowLeftOnRectangle size={14} />
+                Deconectare
               </button>
             </SignOutButton>
           </div>
@@ -382,42 +414,89 @@ export default function Layout() {
   }, []);
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "var(--bg-tertiary)", fontFamily: "var(--font-sans)" }}>
+    <div style={{ display: "flex", minHeight: "100vh", fontFamily: "var(--font-sans)", position: "relative" }}>
       {isMobile && mobileOpen && (
-        <div onClick={() => setMobileOpen(false)}
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 1000 }} />
+        <div
+          onClick={() => setMobileOpen(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.6)",
+            backdropFilter: "blur(4px)",
+            zIndex: 1000,
+          }}
+        />
       )}
 
       <Sidebar mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} isMobile={isMobile} />
 
-      <div style={{ flex: 1, minWidth: 0, minHeight: "100vh", overflowY: "auto" }}>
+      <div style={{ flex: 1, minWidth: 0, minHeight: "100vh", display: "flex", flexDirection: "column", position: "relative" }}>
         {isMobile && (
-          <div style={{
-            height: 56, display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "0 16px", borderBottom: "0.5px solid var(--border-tertiary)",
-            background: "rgba(255,255,255,0.85)", backdropFilter: "blur(20px)",
-            position: "sticky", top: 0, zIndex: 50,
-          }}>
-            <button type="button" onClick={() => setMobileOpen(true)}
-              style={{ border: "none", background: "var(--bg-secondary)", fontSize: 20, cursor: "pointer", color: "var(--text-primary)", width: 38, height: 38, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div
+            style={{
+              height: 56,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "0 16px",
+              background: "rgba(255,255,255,0.8)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              borderBottom: "1px solid rgba(0,0,0,0.06)",
+              position: "sticky",
+              top: 0,
+              zIndex: 50,
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              style={{
+                border: "none",
+                background: "rgba(0,0,0,0.04)",
+                fontSize: 18,
+                cursor: "pointer",
+                color: "var(--text-primary)",
+                width: 38,
+                height: 38,
+                borderRadius: 12,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
               ☰
             </button>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 34, height: 34, borderRadius: 10, background: "linear-gradient(135deg, var(--primary), var(--primary-dark))", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <div
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 10,
+                  background: "linear-gradient(135deg, var(--primary), var(--accent))",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 2px 8px rgba(99,102,241,0.3)",
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="3" width="7" height="7" rx="1.5" />
                   <rect x="14" y="3" width="7" height="7" rx="1.5" />
                   <rect x="3" y="14" width="7" height="7" rx="1.5" />
                   <rect x="14" y="14" width="7" height="7" rx="1.5" />
                 </svg>
               </div>
-              <div style={{ fontSize: 14, fontWeight: 800, color: "var(--text-primary)" }}>Dashboard</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)" }}>Dashboard</div>
             </div>
             <div style={{ width: 38 }} />
           </div>
         )}
 
-        <Outlet />
+
+        <div style={{ flex: 1, overflowY: "auto", position: "relative" }}>
+          <Outlet />
+        </div>
       </div>
     </div>
   );

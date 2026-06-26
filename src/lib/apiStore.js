@@ -52,7 +52,7 @@ async function apiFetch(resource, method, body, id, retry = true) {
 }
 
 export function createSyncedStore(key, initial = []) {
-  const lsKey = `abu-${key}-v2`;
+  const lsKey = `imob-${key}-v2`;
 
   function readLocal() {
     try {

@@ -8,7 +8,7 @@ const PRIORITATI = [
   { value: "high", label: "Ridicată", color: "var(--danger)", bg: "var(--danger-light)" },
 ];
 
-const card = { background: "var(--bg-primary)", border: "0.5px solid var(--border-tertiary)", borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-sm)" };
+const card = { background: "rgba(255,255,255,0.8)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.6)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-card)" };
 const input = { width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid var(--border-secondary)", background: "var(--bg-primary)", color: "var(--text-primary)", outline: "none", fontSize: 13, boxSizing: "border-box" };
 
 function useIsMobile() {

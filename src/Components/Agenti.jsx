@@ -3,7 +3,7 @@ import { getAgenti, addAgent, updateAgent, deleteAgent } from "../data/agentiSto
 import { isAdmin, isManagerOrAdmin } from "../lib/roleStore";
 import { HiOutlinePencil, HiOutlineTrash, HiOutlinePlus, HiOutlineArrowUpTray, HiOutlineXMark } from "react-icons/hi2";
 
-const card = { background: "var(--bg-primary)", border: "0.5px solid var(--border-tertiary)", borderRadius: 16 };
+const card = { background: "rgba(255,255,255,0.8)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.6)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-card)" };
 const inputStyle = { width: "100%", padding: "10px 14px", fontSize: 13, borderRadius: 10, border: "0.5px solid var(--border-secondary)", background: "var(--bg-primary)", color: "var(--text-primary)", boxSizing: "border-box", outline: "none" };
 const labelStyle = { display: "block", fontSize: 11, fontWeight: 700, marginBottom: 4, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.3px" };
 

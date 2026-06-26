@@ -20,7 +20,7 @@ const STADII = [
   { value: "delivered", label: "Predat", color: "var(--primary)", bg: "var(--primary-light)" },
 ];
 
-const card = { background: "var(--bg-primary)", border: "0.5px solid var(--border-tertiary)", borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-sm)" };
+const card = { background: "rgba(255,255,255,0.8)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.6)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-card)" };
 const input = { width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid var(--border-secondary)", background: "var(--bg-primary)", color: "var(--text-primary)", outline: "none", fontSize: 13, boxSizing: "border-box" };
 const labelStyle = { display: "block", fontSize: 11, fontWeight: 700, marginBottom: 4, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.3px" };
 
@@ -141,7 +141,7 @@ function ProiectForm({ onAdd, onCancel }) {
           <label style={labelStyle}>Descriere</label>
           <textarea style={{ ...input, resize: "vertical", minHeight: 80 }} placeholder="Descrie proiectul..." value={form.descriere} onChange={(e) => upd("descriere", e.target.value)} />
         </div>
-        <button type="submit" style={{ gridColumn: "span 2", border: "none", borderRadius: 10, background: "var(--primary)", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 13, padding: "12px 14px" }}>
+        <button type="submit" style={{ gridColumn: "span 2", border: "none", borderRadius: 12, background: "linear-gradient(135deg, var(--primary), var(--accent))", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 13, padding: "12px 14px", boxShadow: "0 4px 14px rgba(99,102,241,0.3)" }}>
           Adaugă proiect
         </button>
       </div>
@@ -198,8 +198,8 @@ export default function Proiecte() {
       {/* Header */}
       <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
         <div>
-          <div style={{ fontSize: 24, fontWeight: 800, color: "var(--text-primary)", marginBottom: 4, display: "flex", alignItems: "center", gap: 10, letterSpacing: "-0.02em" }}>
-            <HiOutlineBuildingOffice2 size={24} color="var(--primary)" />
+          <div style={{ fontSize: 28, fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.5px", marginBottom: 4, display: "flex", alignItems: "center", gap: 10 }}>
+            <HiOutlineBuildingOffice2 size={26} color="var(--primary)" />
             Proiecte Rezidențiale
           </div>
           <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
@@ -208,7 +208,7 @@ export default function Proiecte() {
         </div>
         {!showForm && !editingId && (
           <button onClick={() => setShowForm(true)}
-            style={{ display: "inline-flex", alignItems: "center", gap: 6, border: "none", background: "var(--primary)", color: "#fff", padding: "10px 22px", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, border: "none", background: "linear-gradient(135deg, var(--primary), var(--accent))", color: "#fff", padding: "10px 22px", borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 14px rgba(99,102,241,0.3)" }}>
             <HiOutlinePlus size={16} /> Proiect nou
           </button>
         )}
@@ -247,7 +247,7 @@ export default function Proiecte() {
             <input style={input} type="number" placeholder="Preț până la €" value={editForm.pretPanaLa || ""} onChange={(e) => setEditForm({ ...editForm, pretPanaLa: e.target.value })} />
             <div style={{ gridColumn: "span 2" }}>
               <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={saveEdit} style={{ flex: 1, border: "none", borderRadius: 10, background: "var(--primary)", color: "#fff", fontWeight: 700, cursor: "pointer", padding: "10px 14px", fontSize: 12 }}><HiOutlineCheck size={14} style={{ marginRight: 4 }} /> Salvează</button>
+                <button onClick={saveEdit} style={{ flex: 1, border: "none", borderRadius: 12, background: "linear-gradient(135deg, var(--primary), var(--accent))", color: "#fff", fontWeight: 700, cursor: "pointer", padding: "10px 14px", fontSize: 12, boxShadow: "0 4px 14px rgba(99,102,241,0.3)" }}><HiOutlineCheck size={14} style={{ marginRight: 4 }} /> Salvează</button>
                 <button type="button" onClick={cancelEdit} style={{ flex: 1, border: "1px solid var(--border-secondary)", borderRadius: 10, background: "var(--bg-primary)", color: "var(--text-secondary)", fontWeight: 700, cursor: "pointer", padding: "10px 14px", fontSize: 12 }}>Anulează</button>
               </div>
             </div>

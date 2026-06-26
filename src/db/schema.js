@@ -172,10 +172,22 @@ export const campanii = pgTable("campanii", {
   dataStart: text("data_start"),
   dataEnd: text("data_end"),
   buget: text("buget"),
-  leaduriGenerate: text("leaduri_generate"),
-  status: text("status").default("Activă"),
-  descriere: text("descriere"),
   createdByName: text("created_by_name"),
   updatedByName: text("updated_by_name"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const notificari = pgTable("notificari", {
+  id: bigint("id", { mode: "number" }).primaryKey(),
+  orgId: text("org_id").notNull(),
+  orgShortId: text("org_short_id"),
+  userId: text("user_id").notNull(),
+  cheie: text("cheie"),
+  tip: text("tip").default("info"),
+  titlu: text("titlu").notNull(),
+  mesaj: text("mesaj"),
+  prioritate: text("prioritate").default("normal"),
+  citit: boolean("citit").default(false),
+  createdByName: text("created_by_name"),
   createdAt: timestamp("created_at").defaultNow(),
 });

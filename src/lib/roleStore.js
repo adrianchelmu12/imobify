@@ -1,4 +1,4 @@
-let _role = "agent";
+let _role = "admin";
 let _userName = null;
 
 export function setRole(role) {

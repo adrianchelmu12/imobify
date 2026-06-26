@@ -13,7 +13,7 @@ const statusStyle = {
 };
 
 const page = { padding: "22px 24px" };
-const card = { background: "var(--bg-primary)", border: "0.5px solid var(--border-tertiary)", borderRadius: 14 };
+const card = { background: "rgba(255,255,255,0.8)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.6)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-card)" };
 
 function useIsMobile() {
   const [m, setM] = useState(() => typeof window !== "undefined" && window.innerWidth <= 900);
@@ -29,12 +29,11 @@ function formatData(data) {
 }
 
 function StatCard({ label, value, hint }) {
-  const m = useIsMobile();
   return (
-    <div style={{ ...card, padding: m ? "14px 15px" : "16px 18px" }}>
-      <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 8 }}>{label}</div>
-      <div style={{ fontSize: 26, fontWeight: 600, color: "var(--text-primary)", lineHeight: 1 }}>{value}</div>
-      <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 8 }}>{hint}</div>
+    <div style={{ ...card, padding: "20px 22px", transition: "all 0.3s ease" }} onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "var(--shadow-lg)"; }} onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "var(--shadow-card)"; }}>
+      <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 8, fontWeight: 500 }}>{label}</div>
+      <div style={{ fontSize: 30, fontWeight: 800, color: "var(--text-primary)", lineHeight: 1, letterSpacing: "-0.5px" }}>{value}</div>
+      <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 8 }}>{hint}</div>
     </div>
   );
 }
@@ -80,7 +79,7 @@ function ProgramareForm({ clienti, onAdd }) {
         <select style={input} value={form.tip} onChange={(e) => update("tip", e.target.value)}>{TIPURI.map((t) => <option key={t}>{t}</option>)}</select>
         <select style={input} value={form.status} onChange={(e) => update("status", e.target.value)}>{STATUS.filter((s) => s !== "Toate").map((s) => <option key={s}>{s}</option>)}</select>
         <textarea style={{ ...input, gridColumn: "1 / -1", resize: "vertical", minHeight: 74 }} placeholder="Observații" value={form.observatii} onChange={(e) => update("observatii", e.target.value)} />
-        <button type="submit" style={{ gridColumn: "1 / -1", border: "none", borderRadius: 10, background: "var(--primary)", color: "white", fontWeight: 600, cursor: "pointer", fontSize: 13, padding: "11px 14px" }}>Adaugă programare</button>
+        <button type="submit" style={{ gridColumn: "1 / -1", border: "none", borderRadius: 12, background: "linear-gradient(135deg, var(--primary), var(--accent))", color: "white", fontWeight: 600, cursor: "pointer", fontSize: 13, padding: "11px 14px", boxShadow: "0 4px 14px rgba(99,102,241,0.3)" }}>Adaugă programare</button>
       </div>
     </form>
   );
@@ -127,8 +126,8 @@ export default function Programari() {
   return (
     <div style={{ ...page, padding: m ? "18px 14px 28px" : "22px 24px" }}>
       <header style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 22, fontWeight: 700, color: "var(--text-primary)", marginBottom: 4 }}>Programări</div>
-        <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Gestionează vizionările, întâlnirile, contractele și apelurile cu clienții.</div>
+        <div style={{ fontSize: 26, fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.5px", marginBottom: 4 }}>Programări</div>
+        <div style={{ fontSize: 13, color: "var(--text-muted)" }}>Gestionează vizionările, întâlnirile, contractele și apelurile cu clienții.</div>
       </header>
 
       <section style={{ display: "grid", gridTemplateColumns: m ? "1fr 1fr" : "repeat(4, 1fr)", gap: 12, marginBottom: 18 }}>

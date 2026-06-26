@@ -8,6 +8,7 @@ export const proiecteStore = createSyncedStore("proiecte", []);
 export const documenteStore = createSyncedStore("documente", []);
 export const comisioaneStore = createSyncedStore("comisioane", []);
 export const campaniiStore = createSyncedStore("campanii", []);
+export const notificariStore = createSyncedStore("notificari", []);
 
 const allStores = [
   proprietatiStore,
@@ -18,6 +19,7 @@ const allStores = [
   documenteStore,
   comisioaneStore,
   campaniiStore,
+  notificariStore,
 ];
 
 export async function syncAllStores() {

@@ -30,9 +30,9 @@ async function getUserInfo(userId, orgId) {
     const sql = getOrgSql();
     const rows = await sql`SELECT rol, nume FROM agenti WHERE user_id = ${userId} AND org_id = ${orgId}`;
     const row = rows[0];
-    return { role: row?.rol || "agent", name: row?.nume || null };
+    return { role: row?.rol || "admin", name: row?.nume || null };
   } catch {
-    return { role: "agent", name: null };
+    return { role: "admin", name: null };
   }
 }
 

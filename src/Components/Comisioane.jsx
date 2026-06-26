@@ -8,7 +8,7 @@ const statusStyle = {
   "În așteptare": { background: "var(--warning-light)", color: "var(--warning-dark)" },
 };
 
-const card = { background: "var(--bg-primary)", border: "0.5px solid var(--border-tertiary)", borderRadius: 14 };
+const card = { background: "rgba(255,255,255,0.8)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.6)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-card)" };
 const input = { width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid var(--border-secondary)", background: "var(--bg-primary)", color: "var(--text-primary)", outline: "none", fontSize: 13, boxSizing: "border-box" };
 
 function useIsMobile() {
@@ -19,10 +19,10 @@ function useIsMobile() {
 
 function StatCard({ label, value, hint, color }) {
   return (
-    <div style={{ ...card, padding: "16px 18px" }}>
-      <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 6 }}>{label}</div>
-      <div style={{ fontSize: 26, fontWeight: 700, color: color || "var(--text-primary)" }}>{value}</div>
-      <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 6 }}>{hint}</div>
+    <div style={{ ...card, padding: "20px 22px", transition: "all 0.3s ease" }} onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "var(--shadow-lg)"; }} onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "var(--shadow-card)"; }}>
+      <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 8, fontWeight: 500 }}>{label}</div>
+      <div style={{ fontSize: 30, fontWeight: 800, color: color || "var(--text-primary)", lineHeight: 1, letterSpacing: "-0.5px" }}>{value}</div>
+      <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 8 }}>{hint}</div>
     </div>
   );
 }
@@ -67,7 +67,7 @@ export default function Comisioane() {
     <div style={{ padding: m ? "18px 14px 28px" : "28px 32px" }}>
       <header style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
         <div>
-          <div style={{ fontSize: 24, fontWeight: 800, color: "var(--text-primary)", marginBottom: 4 }}>Comisioane</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.5px", marginBottom: 4 }}>Comisioane</div>
           <div style={{ fontSize: 13, color: "var(--text-muted)" }}>Urmărește comisioanele agenților și statusul plăților</div>
         </div>
       </header>
@@ -92,7 +92,7 @@ export default function Comisioane() {
             <input style={input} type="number" placeholder="Sumă comision (€)" value={editForm.suma || ""} onChange={(e) => setEditForm({ ...editForm, suma: e.target.value })} />
             <input style={input} type="date" value={editForm.data || ""} onChange={(e) => setEditForm({ ...editForm, data: e.target.value })} />
             <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
-              <button onClick={saveEdit} style={{ flex: 1, border: "none", borderRadius: 10, background: "var(--primary)", color: "#fff", fontWeight: 700, cursor: "pointer", padding: "10px 14px", fontSize: 12 }}>Salvează</button>
+              <button onClick={saveEdit} style={{ flex: 1, border: "none", borderRadius: 12, background: "linear-gradient(135deg, var(--primary), var(--accent))", color: "#fff", fontWeight: 700, cursor: "pointer", padding: "10px 14px", fontSize: 12, boxShadow: "0 4px 14px rgba(99,102,241,0.3)" }}>Salvează</button>
               <button onClick={cancelEdit} style={{ flex: 1, border: "1px solid var(--border-secondary)", borderRadius: 10, background: "var(--bg-primary)", color: "var(--text-secondary)", fontWeight: 700, cursor: "pointer", padding: "10px 14px", fontSize: 12 }}>Anulează</button>
             </div>
           </div>
@@ -184,7 +184,7 @@ function ComisionForm({ onAdd }) {
         <input style={input} type="number" placeholder="Procent (%)" value={form.procent} onChange={(e) => upd("procent", e.target.value)} step="0.5" />
         <input style={input} type="number" placeholder="Sumă comision (€) *" value={form.suma} onChange={(e) => upd("suma", e.target.value)} />
         <input style={input} type="date" value={form.data} onChange={(e) => upd("data", e.target.value)} />
-        <button type="submit" style={{ gridColumn: m ? "span 1" : "span 3", border: "none", borderRadius: 10, background: "var(--primary)", color: "#fff", fontWeight: 600, cursor: "pointer", fontSize: 13, padding: "11px 14px" }}>Adaugă comision</button>
+        <button type="submit" style={{ gridColumn: m ? "span 1" : "span 3", border: "none", borderRadius: 12, background: "linear-gradient(135deg, var(--primary), var(--accent))", color: "#fff", fontWeight: 600, cursor: "pointer", fontSize: 13, padding: "11px 14px", boxShadow: "0 4px 14px rgba(99,102,241,0.3)" }}>Adaugă comision</button>
       </div>
     </form>
   );

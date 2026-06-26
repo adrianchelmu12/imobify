@@ -92,7 +92,7 @@ export default function Portofoliu() {
     return lista;
   }, [proprietati, filterTip, filterTranzactie, filterZona, pretMin, pretMax, search, sort]);
 
-  const card = { background: "var(--bg-primary)", border: "0.5px solid var(--border-tertiary)", borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-sm)" };
+  const card = { background: "rgba(255,255,255,0.8)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.6)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-card)" };
 
   const openDetail = (p) => { setSelected(p); setImgIndex(0); document.body.style.overflow = "hidden"; };
   const closeDetail = () => { setSelected(null); document.body.style.overflow = ""; };
