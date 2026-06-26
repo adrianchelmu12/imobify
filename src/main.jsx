@@ -4,11 +4,17 @@ import { ClerkProvider } from "@clerk/clerk-react";
 
 import "./index.css";
 import App from "./App";
+import { seedAllData } from "./mockData.js";
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 if (!PUBLISHABLE_KEY) {
   throw new Error("VITE_CLERK_PUBLISHABLE_KEY lipsește din .env");
+}
+
+const existingData = localStorage.getItem("imob-proprietati-v2");
+if (!existingData || JSON.parse(existingData).length === 0) {
+  seedAllData();
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(
