@@ -193,6 +193,17 @@ export const notificari = pgTable("notificari", {
 });
 
 export const organizations = pgTable("organizations", {
+  id: bigint("id", { mode: "number" }).primaryKey(),
   clerkId: text("clerk_id").notNull(),
   shortId: text("short_id"),
+  name: text("name"),
+  slug: text("slug"),
+  logoUrl: text("logo_url"),
+  email: text("email"),
+  phone: text("phone"),
+  address: text("address"),
+  city: text("city"),
+  county: text("county"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at"),
 });
