@@ -191,3 +191,8 @@ export const notificari = pgTable("notificari", {
   createdByName: text("created_by_name"),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+export const organizations = pgTable("organizations", {
+  clerkId: text("clerk_id").notNull(),
+  shortId: text("short_id"),
+});
