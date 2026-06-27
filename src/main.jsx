@@ -6,7 +6,7 @@ import "./index.css";
 import App from "./App";
 
 (function curataDateFictive() {
-  if (localStorage.getItem("imob-data-curatata")) return;
+  if (localStorage.getItem("imob-data-curatata-v2")) return;
   const filtreaza = (key, ids) => {
     const raw = localStorage.getItem(key);
     if (!raw) return;
@@ -24,7 +24,17 @@ import App from "./App";
   filtreaza("imob-campanii-v2", Array.from({ length: 8 }, (_, i) => 7000 + i));
   filtreaza("imob-agenti-v2", [1, 2, 3, 4]);
   filtreaza("imob-documente-v2", [8001, 8002, 8003]);
-  localStorage.setItem("imob-data-curatata", "1");
+
+  (function curataNotificariDemo() {
+    const raw = localStorage.getItem("imob-notificari-v2");
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    const demoKeys = new Set(["demo-1", "demo-2", "demo-3"]);
+    const filtrat = data.filter((n) => !demoKeys.has(n.cheie));
+    localStorage.setItem("imob-notificari-v2", JSON.stringify(filtrat));
+  })();
+
+  localStorage.setItem("imob-data-curatata-v2", "1");
 })();
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
