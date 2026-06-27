@@ -29,7 +29,8 @@ import App from "./App";
     const raw = localStorage.getItem("imob-notificari-v2");
     if (!raw) return;
     const data = JSON.parse(raw);
-    const filtrat = data.filter((n) => !n.cheie);
+    const pastreaza = new Set(["demo-1", "demo-2", "demo-3"]);
+    const filtrat = data.filter((n) => !n.cheie || pastreaza.has(n.cheie));
     localStorage.setItem("imob-notificari-v2", JSON.stringify(filtrat));
   })();
 
