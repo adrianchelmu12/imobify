@@ -67,14 +67,6 @@ export function genereazaNotificari() {
   const existing = getAll();
   const existingKeys = new Set(existing.map((n) => n.cheie));
 
-  if (existing.length === 0 && programari.length === 0) {
-    add({ cheie: "demo-1", tip: "calendar", titlu: "Bine ai venit în CRM!", mesaj: "Adaugă primele proprietăți și clienți pentru a începe.", prioritate: "normal" });
-    add({ cheie: "demo-2", tip: "task", titlu: "Configurează agenția", mesaj: "Adaugă membrii echipei și setează zonele de activitate.", prioritate: "high" });
-    add({ cheie: "demo-3", tip: "client", titlu: "Lead-urile te așteaptă", mesaj: "Conectează canalele de marketing pentru a primi lead-uri automat.", prioritate: "normal" });
-    _lastCheck = now;
-    return;
-  }
-
   function addIfNew(cheie, tip, titlu, mesaj, prioritate = "normal") {
     if (existingKeys.has(cheie)) return;
     add({ cheie, tip, titlu, mesaj, prioritate });
