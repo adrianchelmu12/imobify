@@ -25,7 +25,7 @@ export async function fetchMyRole(tokenGetter) {
   try {
     const token = await tokenGetter();
     if (!token) return;
-    const res = await fetch("/api/me", {
+    const res = await fetch("/api/organizations?action=me", {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) {

@@ -27,6 +27,7 @@ import {
   HiOutlineUserCircle,
   HiOutlineCog6Tooth,
   HiOutlineArrowLeftOnRectangle,
+  HiOutlineGlobeAlt,
 } from "react-icons/hi2";
 
 const NAV_SECTIONS = [
@@ -71,6 +72,12 @@ const NAV_SECTIONS = [
     label: "Analiză",
     items: [
       { label: "Rapoarte", icon: HiOutlinePresentationChartBar, href: "/admin/rapoarte" },
+    ],
+  },
+  {
+    label: "Configurare",
+    items: [
+      { label: "Landing Page", icon: HiOutlineGlobeAlt, href: "/admin/setari-landing" },
     ],
   },
 ];
@@ -383,13 +390,32 @@ export default function Layout() {
   });
   const { getToken } = useAuth();
   const { isLoaded: orgsLoaded, userMemberships, setActive } = useOrganizationList({ userMemberships: true });
+  const { user } = useUser();
   const orgAutoSelected = useRef(false);
+
+  async function syncOrgToDb(orgId, orgName) {
+    try {
+      const token = await getToken({ template: "api" });
+      await fetch("/api/organizations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          name: orgName,
+          userName: user?.fullName || user?.username || "",
+          userEmail: user?.primaryEmailAddress?.emailAddress || "",
+        }),
+      });
+    } catch (e) {
+      console.warn("Sync org to DB failed:", e);
+    }
+  }
 
   useEffect(() => {
     if (orgsLoaded && userMemberships?.data?.length > 0 && !orgAutoSelected.current) {
       orgAutoSelected.current = true;
       const firstOrg = userMemberships.data[0].organization;
       setActive({ organization: firstOrg.id }).then(() => {
+        syncOrgToDb(firstOrg.id, firstOrg.name);
         syncAllStores();
         syncAgenti();
       }).catch(() => {});
@@ -412,6 +438,10 @@ export default function Layout() {
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
+
+  if (orgsLoaded && userMemberships?.data?.length === 0) {
+    return <CreateOrganizationScreen />;
+  }
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", fontFamily: "var(--font-sans)", position: "relative" }}>

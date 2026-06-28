@@ -204,6 +204,13 @@ export const organizations = pgTable("organizations", {
   address: text("address"),
   city: text("city"),
   county: text("county"),
+  landingEnabled: boolean("landing_enabled").default(false),
+  landingPrimaryColor: text("landing_primary_color").default("#2563eb"),
+  landingSecondaryColor: text("landing_secondary_color").default("#f59e0b"),
+  landingAboutText: text("landing_about_text"),
+  landingExperienceYears: text("landing_experience_years"),
+  companyName: text("company_name"),
+  cui: text("cui"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at"),
 });

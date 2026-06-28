@@ -35,6 +35,10 @@ export default async function handler(req, res) {
 
     if (req.method === "POST") {
       const body = await parseBody(req);
+      if (body.imagini && !body.fotografii) {
+        body.fotografii = body.imagini;
+      }
+      delete body.imagini;
       const [row] = await getDb().insert(proprietati).values({ ...body, userId, orgId, orgShortId, createdByName: userName }).returning();
       return res.status(201).json(row);
     }
@@ -42,6 +46,10 @@ export default async function handler(req, res) {
     if (req.method === "PUT") {
       const body = await parseBody(req);
       const { id: rowId, ...data } = body;
+      if (data.imagini && !data.fotografii) {
+        data.fotografii = data.imagini;
+      }
+      delete data.imagini;
       if (!rowId) return res.status(400).json({ error: "ID lipsă" });
       const [row] = await getDb().update(proprietati).set({ ...data, updatedByName: userName }).where(and(eq(proprietati.orgId, orgId), eq(proprietati.id, parseInt(rowId)))).returning();
       return res.json(row);

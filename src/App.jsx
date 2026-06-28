@@ -19,6 +19,7 @@ import Campanii from "./Components/Campanii";
 import Taskuri from "./Components/Taskuri";
 import AiAssistant from "./Components/AiAssistant";
 import Rapoarte from "./Components/Rapoarte";
+import SetariLanding from "./Components/SetariLanding";
 
 function ProtectedRoute({ children }) {
   const { loaded } = useClerk();
@@ -87,6 +88,7 @@ export default function App() {
           <Route path="taskuri" element={<Taskuri />} />
           <Route path="ai-assistant" element={<AiAssistant />} />
           <Route path="rapoarte" element={<Rapoarte />} />
+          <Route path="setari-landing" element={<SetariLanding />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
