@@ -1,3 +1,6 @@
+import { parseBody, sendError } from "./_utils.js";
+import { requireAuth } from "./_auth.js";
+
 const DEEPSEEK_API = "https://api.deepseek.com/chat/completions";
 
 export default async function handler(req, res) {
@@ -5,13 +8,16 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Metodă nepermisă" });
   }
 
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
+
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) {
     return res.status(500).json({ error: "DEEPSEEK_API_KEY nu este configurată" });
   }
 
   try {
-    const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    const body = await parseBody(req);
 
     const response = await fetch(DEEPSEEK_API, {
       method: "POST",
@@ -35,6 +41,6 @@ export default async function handler(req, res) {
     const data = await response.json();
     return res.json(data);
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    sendError(res, err);
   }
 }

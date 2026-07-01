@@ -2,6 +2,7 @@ import { neon, neonConfig } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 
 let _originalFetch = null;
+let _sql = null;
 
 export async function setOrgContext(orgId, userId) {
   if (!_originalFetch) {
@@ -19,10 +20,16 @@ export async function setOrgContext(orgId, userId) {
   };
 }
 
-export function getDb() {
+export function getSql() {
   if (!process.env.DATABASE_URL) {
     throw new Error("DATABASE_URL nu este setat in environment variables");
   }
-  const sql = neon(process.env.DATABASE_URL);
-  return drizzle(sql);
+  if (!_sql) {
+    _sql = neon(process.env.DATABASE_URL);
+  }
+  return _sql;
+}
+
+export function getDb() {
+  return drizzle(getSql());
 }

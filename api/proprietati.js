@@ -2,17 +2,37 @@ import { and, eq } from "drizzle-orm";
 import { getDb, setOrgContext } from "./_db.js";
 import { proprietati } from "../src/db/schema.js";
 import { requireAuth } from "./_auth.js";
+import { parseBody, getSearchParam, sendError } from "./_utils.js";
 
-async function parseBody(req) {
-  if (req.body) return req.body;
-  return new Promise((resolve, reject) => {
-    let data = "";
-    req.on("data", (chunk) => { data += chunk; });
-    req.on("end", () => {
-      try { resolve(JSON.parse(data || "{}")); } catch (e) { reject(e); }
-    });
-    req.on("error", reject);
-  });
+const ALLOWED_FIELDS = [
+  "titlu", "tip", "tipTranzactie", "pret", "pretNumeric",
+  "negociabil", "badgeExclusivitate", "badgeComisionZero",
+  "badge_exclusivitate", "badge_comision_zero",
+  "descriere", "status", "statusProprietate", "recomandata",
+  "disponibilDin", "agentId", "imagine", "fotografii",
+  "adresa", "caracteristici", "dotari",
+  "createdByName", "updatedByName",
+];
+
+const FIELD_ALIASES = {
+  badge_exclusivitate: "badgeExclusivitate",
+  badge_comision_zero: "badgeComisionZero",
+};
+
+function pickAllowed(obj) {
+  const out = {};
+  for (const key of ALLOWED_FIELDS) {
+    const targetKey = FIELD_ALIASES[key] || key;
+    if (key in obj && obj[key] !== undefined) {
+      out[targetKey] = obj[key];
+    }
+  }
+  return out;
+}
+
+function normalize(row) {
+  if (!row) return row;
+  return { ...row, imagini: row.fotografii || row.imagini || [] };
 }
 
 export default async function handler(req, res) {
@@ -20,38 +40,53 @@ export default async function handler(req, res) {
   if (!auth) return;
   const { userId, orgId, orgShortId, userName } = auth;
   await setOrgContext(orgId, userId);
-  const url = new URL(req.url, `http://${req.headers.host}`);
-  const id = url.searchParams.get("id");
+  const id = getSearchParam(req, "id");
 
   try {
     if (req.method === "GET") {
       if (id) {
-        const rows = await getDb().select().from(proprietati).where(and(eq(proprietati.orgId, orgId), eq(proprietati.id, parseInt(id))));
-        return res.json(rows[0] || null);
+        const rows = await getDb()
+          .select()
+          .from(proprietati)
+          .where(and(eq(proprietati.orgId, orgId), eq(proprietati.id, parseInt(id))));
+        return res.json(normalize(rows[0]));
       }
-      const rows = await getDb().select().from(proprietati).where(eq(proprietati.orgId, orgId));
-      return res.json(rows);
+      const rows = await getDb()
+        .select()
+        .from(proprietati)
+        .where(eq(proprietati.orgId, orgId));
+      return res.json(rows.map(normalize));
     }
 
     if (req.method === "POST") {
       const body = await parseBody(req);
-      if (body.imagini && !body.fotografii) {
-        body.fotografii = body.imagini;
-      }
-      delete body.imagini;
-      const [row] = await getDb().insert(proprietati).values({ ...body, userId, orgId, orgShortId, createdByName: userName }).returning();
-      return res.status(201).json(row);
+      const data = pickAllowed(body);
+      if (body.imagini) data.fotografii = body.imagini;
+      if (body.imagine) data.imagine = body.imagine;
+
+      const values = { ...data, userId, orgId, orgShortId, createdByName: userName };
+      if (body.adresa && typeof body.adresa === "object") values.adresa = body.adresa;
+      if (body.caracteristici && typeof body.caracteristici === "object") values.caracteristici = body.caracteristici;
+
+      const [row] = await getDb().insert(proprietati).values(values).returning();
+      return res.status(201).json({ ...row, _x: { recv: !!body.caracteristici, saved: !!row.caracteristici } });
     }
 
     if (req.method === "PUT") {
       const body = await parseBody(req);
-      const { id: rowId, ...data } = body;
-      if (data.imagini && !data.fotografii) {
-        data.fotografii = data.imagini;
-      }
-      delete data.imagini;
+      const rowId = body.id;
       if (!rowId) return res.status(400).json({ error: "ID lipsă" });
-      const [row] = await getDb().update(proprietati).set({ ...data, updatedByName: userName }).where(and(eq(proprietati.orgId, orgId), eq(proprietati.id, parseInt(rowId)))).returning();
+
+      const data = pickAllowed(body);
+      if (body.imagini) data.fotografii = body.imagini;
+      if (body.imagine) data.imagine = body.imagine;
+      if (body.adresa && typeof body.adresa === "object") data.adresa = body.adresa;
+
+      const [row] = await getDb()
+        .update(proprietati)
+        .set({ ...data, updatedByName: userName })
+        .where(and(eq(proprietati.orgId, orgId), eq(proprietati.id, parseInt(rowId))))
+        .returning();
       return res.json(row);
     }
 
@@ -62,13 +97,14 @@ export default async function handler(req, res) {
         deleteId = body?.id;
       }
       if (!deleteId) return res.status(400).json({ error: "ID lipsă" });
-      await getDb().delete(proprietati).where(and(eq(proprietati.orgId, orgId), eq(proprietati.id, parseInt(deleteId))));
+      await getDb()
+        .delete(proprietati)
+        .where(and(eq(proprietati.orgId, orgId), eq(proprietati.id, parseInt(deleteId))));
       return res.json({ success: true });
     }
 
     res.status(405).json({ error: "Metodă nepermisă" });
   } catch (err) {
-    console.error("API error:", err.message);
-    res.status(500).json({ error: err.message });
+    sendError(res, err);
   }
 }

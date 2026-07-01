@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useAuth } from "@clerk/clerk-react";
 import { proprietatiStore, clientiStore, programariStore, taskuriStore, comisioaneStore, campaniiStore } from "../data/stores";
 
 const card = { background: "rgba(255,255,255,0.8)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.6)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-card)" };
@@ -21,11 +22,11 @@ function buildSystemPrompt(date) {
   const co = date.comisioane;
   const ca = date.campanii;
 
-  const disp = p.filter(x => x.status === "disponibil").length;
+  const disp = p.filter(x => (x.status === "disponibil" || x.status === "activ")).length;
   const vandute = p.filter(x => x.status === "vandut").length;
   const inchiriate = p.filter(x => x.status === "inchiriat").length;
 
-  const preturiDisp = p.filter(x => x.status === "disponibil" && x.pretNumeric).map(x => x.pretNumeric);
+  const preturiDisp = p.filter(x => (x.status === "disponibil" || x.status === "activ") && x.pretNumeric).map(x => x.pretNumeric);
   const pretMin = preturiDisp.length ? Math.min(...preturiDisp) : 0;
   const pretMax = preturiDisp.length ? Math.max(...preturiDisp) : 0;
   const pretMediu = preturiDisp.length ? Math.round(preturiDisp.reduce((a, b) => a + b, 0) / preturiDisp.length) : 0;
@@ -51,7 +52,7 @@ function buildSystemPrompt(date) {
   const campActive = ca.filter(x => x.status === "Activă").length;
   const leaduri = ca.reduce((s, x) => s + (Number(x.leaduriGenerate) || 0), 0);
 
-  const propDisp = p.filter(x => x.status === "disponibil").slice(0, 10);
+  const propDisp = p.filter(x => (x.status === "disponibil" || x.status === "activ")).slice(0, 10);
   const propDetails = propDisp.map(x =>
     `- "${x.titlu}", ${x.tip}, ${x.tranzactie}, ${x.pret}, ${x.locatie || ""}, ${x.camere || 0} camere, ${x.suprafata || 0} mp, ${x.descriere || ""}`
   ).join("\n");
@@ -153,6 +154,8 @@ export default function AiAssistant() {
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [mesaje, seIncarca]);
 
+  const { getToken } = useAuth();
+
   const trimite = async (text) => {
     const t = text || inputText.trim();
     if (!t || seIncarca) return;
@@ -165,9 +168,13 @@ export default function AiAssistant() {
     setSeIncarca(true);
 
     try {
+      const token = await getToken({ template: "api" });
       const response = await fetch("/api/deepseek", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           messages: [
             { role: "system", content: buildSystemPrompt(fresh) },

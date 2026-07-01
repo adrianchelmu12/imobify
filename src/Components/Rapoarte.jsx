@@ -109,7 +109,7 @@ export default function Rapoarte() {
 
   const azi = new Date().toISOString().slice(0, 10);
 
-  const propDisponibile = date.proprietati.filter((p) => p.status === "disponibil").length;
+  const propDisponibile = date.proprietati.filter((p) => (p.status === "disponibil" || p.status === "activ")).length;
   const propVandute = date.proprietati.filter((p) => p.status === "vandut").length;
   const propInchiriate = date.proprietati.filter((p) => p.status === "inchiriat").length;
   const clientiActivi = date.clienti.filter((c) => c.status !== "Închis").length;
@@ -156,6 +156,19 @@ export default function Rapoarte() {
   const comisioaneData = [
     { name: "Comisioane", Total: comisioaneTotale, Plătite: comisioanePlatite },
   ];
+
+  function CustomPerfLegend({ payload }) {
+    return (
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 18px", paddingTop: 14, justifyContent: "center" }}>
+        {(payload || []).map((entry, index) => (
+          <div key={index} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--text-secondary)", whiteSpace: "nowrap", lineHeight: "20px" }}>
+            <span style={{ width: 7, height: 7, borderRadius: "50%", background: entry.color, flexShrink: 0, display: "inline-block" }} />
+            {entry.value}
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: m ? "18px 14px 28px" : "32px" }}>
@@ -242,7 +255,7 @@ export default function Rapoarte() {
               <XAxis dataKey="name" tick={{ fontSize: 12, fill: "var(--text-secondary)", fontWeight: 500 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: "var(--text-tertiary)" }} axisLine={false} tickLine={false} />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(99,102,241,0.04)" }} />
-              <Legend iconType="circle" iconSize={8} />
+              <Legend content={<CustomPerfLegend />} />
               <Bar dataKey="Programări" fill="url(#gradPerf1)" radius={[8, 8, 0, 0]} />
               <Bar dataKey="Azi" fill="url(#gradPerf2)" radius={[8, 8, 0, 0]} />
               <Bar dataKey="Taskuri" fill="url(#gradPerf3)" radius={[8, 8, 0, 0]} />

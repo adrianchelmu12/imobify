@@ -1,5 +1,5 @@
 import { verifyToken } from "@clerk/backend";
-import { neon } from "@neondatabase/serverless";
+import { getSql } from "./_db.js";
 
 function getToken(req) {
   const auth = req.headers.authorization;
@@ -7,17 +7,9 @@ function getToken(req) {
   return auth.split("Bearer ")[1];
 }
 
-let _orgSql = null;
-function getOrgSql() {
-  if (!_orgSql) {
-    _orgSql = neon(process.env.DATABASE_URL);
-  }
-  return _orgSql;
-}
-
 async function getOrgShortId(clerkOrgId) {
   try {
-    const sql = getOrgSql();
+    const sql = getSql();
     const rows = await sql`SELECT short_id FROM organizations WHERE clerk_id = ${clerkOrgId}`;
     return rows[0]?.short_id || null;
   } catch {
@@ -27,7 +19,7 @@ async function getOrgShortId(clerkOrgId) {
 
 async function getUserInfo(userId, orgId) {
   try {
-    const sql = getOrgSql();
+    const sql = getSql();
     const rows = await sql`SELECT rol, nume FROM agenti WHERE user_id = ${userId} AND org_id = ${orgId}`;
     const row = rows[0];
     return { role: row?.rol || "admin", name: row?.nume || null };

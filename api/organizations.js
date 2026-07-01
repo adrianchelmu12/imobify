@@ -2,18 +2,7 @@ import { eq } from "drizzle-orm";
 import { getDb, setOrgContext } from "./_db.js";
 import { organizations, agenti } from "../src/db/schema.js";
 import { requireAuth } from "./_auth.js";
-
-async function parseBody(req) {
-  if (req.body) return req.body;
-  return new Promise((resolve, reject) => {
-    let data = "";
-    req.on("data", (chunk) => { data += chunk; });
-    req.on("end", () => {
-      try { resolve(JSON.parse(data || "{}")); } catch (e) { reject(e); }
-    });
-    req.on("error", reject);
-  });
-}
+import { parseBody, sendError } from "./_utils.js";
 
 function generateShortId() {
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -145,7 +134,6 @@ export default async function handler(req, res) {
 
     res.status(405).json({ error: "Metodă nepermisă" });
   } catch (err) {
-    console.error("Organizations API error:", err.message);
-    res.status(500).json({ error: err.message });
+    sendError(res, err);
   }
 }
