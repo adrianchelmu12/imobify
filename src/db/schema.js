@@ -224,6 +224,7 @@ export const googleTokens = pgTable("google_tokens", {
   expiryDate: bigint("expiry_date", { mode: "number" }),
   calendarId: text("calendar_id").default("primary"),
   email: text("email"),
+  connected: boolean("connected").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at"),
 });
