@@ -18,21 +18,33 @@ async function getOrgEmail(orgId) {
       .select({ email: organizations.email, companyName: organizations.companyName, name: organizations.name })
       .from(organizations)
       .where(eq(organizations.clerkId, orgId));
-    return rows[0] || null;
-  } catch {
+    const org = rows[0] || null;
+    console.log("Org email lookup:", org?.email || "NOT SET");
+    return org;
+  } catch (e) {
+    console.error("getOrgEmail error:", e.message);
     return null;
   }
 }
 
+function send(resend, opts) {
+  return resend.emails.send(opts).then((r) => {
+    console.log("Email sent:", r.data?.id || "OK");
+    return r;
+  }).catch((e) => {
+    console.error("Resend error:", e.message, JSON.stringify(e));
+  });
+}
+
 export async function notifyClientNou(client, orgId, addedBy) {
   const resend = getResend();
-  if (!resend) return;
+  if (!resend) { console.log("Resend not configured"); return; }
 
   const org = await getOrgEmail(orgId);
   const to = org?.email;
   if (!to) return;
 
-  await resend.emails.send({
+  await send(resend, {
     from: "Imobify <notificari@imobify.ro>",
     to,
     subject: `Client nou: ${client.nume}`,
@@ -49,18 +61,18 @@ export async function notifyClientNou(client, orgId, addedBy) {
         <p style="color:#6b7280;font-size:12px;margin-top:20px">Adăugat de ${addedBy || "—"} · ${org?.companyName || org?.name || "Imobify"}</p>
       </div>
     `,
-  }).catch((e) => console.error("Resend client nou:", e.message));
+  });
 }
 
 export async function notifyProgramareNoua(programare, orgId, addedBy) {
   const resend = getResend();
-  if (!resend) return;
+  if (!resend) { console.log("Resend not configured"); return; }
 
   const org = await getOrgEmail(orgId);
   const to = org?.email;
-  if (!to) return;
+  if (!to) { console.log("No org email set, skipping"); return; }
 
-  await resend.emails.send({
+  await send(resend, {
     from: "Imobify <notificari@imobify.ro>",
     to,
     subject: `Programare nouă: ${programare.titlu}`,
@@ -77,18 +89,18 @@ export async function notifyProgramareNoua(programare, orgId, addedBy) {
         <p style="color:#6b7280;font-size:12px;margin-top:20px">Adăugat de ${addedBy || "—"} · ${org?.companyName || org?.name || "Imobify"}</p>
       </div>
     `,
-  }).catch((e) => console.error("Resend programare noua:", e.message));
+  });
 }
 
 export async function notifyProgramareActualizata(programare, orgId, updatedBy) {
   const resend = getResend();
-  if (!resend) return;
+  if (!resend) { console.log("Resend not configured"); return; }
 
   const org = await getOrgEmail(orgId);
   const to = org?.email;
-  if (!to) return;
+  if (!to) { console.log("No org email set, skipping"); return; }
 
-  await resend.emails.send({
+  await send(resend, {
     from: "Imobify <notificari@imobify.ro>",
     to,
     subject: `Programare actualizată: ${programare.titlu}`,
@@ -104,5 +116,5 @@ export async function notifyProgramareActualizata(programare, orgId, updatedBy) 
         <p style="color:#6b7280;font-size:12px;margin-top:20px">Modificat de ${updatedBy || "—"} · ${org?.companyName || org?.name || "Imobify"}</p>
       </div>
     `,
-  }).catch((e) => console.error("Resend programare actualizata:", e.message));
+  });
 }
