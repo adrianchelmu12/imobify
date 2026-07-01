@@ -76,7 +76,8 @@ export function sendError(res, err) {
   res.status(statusCode).json({ error: message });
 }
 
-export function createCrudHandler(table) {
+export function createCrudHandler(table, opts = {}) {
+  const { onCreate, onUpdate } = opts;
   return async function handler(req, res) {
     const auth = await requireAuth(req, res);
     if (!auth) return;
@@ -106,6 +107,7 @@ export function createCrudHandler(table) {
           .insert(table)
           .values({ ...body, userId, orgId, orgShortId, createdByName: userName })
           .returning();
+        if (onCreate) onCreate(row, orgId, userName);
         return res.status(201).json(row);
       }
 
@@ -118,6 +120,7 @@ export function createCrudHandler(table) {
           .set({ ...data, updatedByName: userName })
           .where(and(eq(table.orgId, orgId), eq(table.id, parseInt(rowId))))
           .returning();
+        if (onUpdate) onUpdate({ ...data, id: rowId }, orgId, userName);
         return res.json(row);
       }
 
