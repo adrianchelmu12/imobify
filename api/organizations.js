@@ -148,7 +148,11 @@ export default async function handler(req, res) {
           code, grant_type: "authorization_code", redirect_uri: redirectUri,
         }),
       });
-      if (!tokenRes.ok) return res.status(400).json({ error: "Token exchange failed" });
+      if (!tokenRes.ok) {
+        const errText = await tokenRes.text();
+        console.error("Google token exchange failed:", tokenRes.status, errText);
+        return res.status(400).json({ error: "Token exchange failed: " + errText });
+      }
       const tokenData = await tokenRes.json();
       let email = null;
       try {
@@ -156,7 +160,9 @@ export default async function handler(req, res) {
           headers: { Authorization: `Bearer ${tokenData.access_token}` },
         });
         if (userRes.ok) { const u = await userRes.json(); email = u.email; }
-      } catch {}
+      } catch (e) {
+        console.error("Google userinfo failed:", e.message);
+      }
       await storeGoogleToken(userId, orgId, tokenData, email);
       return res.json({ ok: true, email });
     }
@@ -303,6 +309,7 @@ export default async function handler(req, res) {
 
     res.status(405).json({ error: "Metodă nepermisă" });
   } catch (err) {
+    console.error("Organizations API error:", err?.message, err?.stack);
     sendError(res, err);
   }
 }
