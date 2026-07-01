@@ -139,9 +139,6 @@ export default async function handler(req, res) {
       const body = await parseBody(req);
       const { code, redirectUri } = body;
       if (!code) return res.status(400).json({ error: "Authorization code missing" });
-      if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-        return res.status(500).json({ error: "GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET not configured" });
-      }
       const tokenRes = await fetch(GOOGLE_TOKEN_URL, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -313,6 +310,6 @@ export default async function handler(req, res) {
     res.status(405).json({ error: "Metodă nepermisă" });
   } catch (err) {
     console.error("Organizations API error:", err?.message, err?.stack);
-    res.status(500).json({ error: err?.message || "Internal server error", stack: err?.stack?.split("\n")?.slice(0, 3) });
+    sendError(res, err);
   }
 }
