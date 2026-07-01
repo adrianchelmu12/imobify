@@ -2,9 +2,22 @@ import { verifyToken } from "@clerk/backend";
 import { getSql } from "./_db.js";
 
 function getToken(req) {
-  const auth = req.headers.authorization;
+  const auth = typeof req.headers.get === "function"
+    ? req.headers.get("authorization")
+    : req.headers.authorization;
   if (!auth || !auth.startsWith("Bearer ")) return null;
   return auth.split("Bearer ")[1];
+}
+
+function respond(res, status, message) {
+  if (typeof res.json === "function") {
+    res.status(status).json({ error: message });
+  } else {
+    res.statusCode = status;
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ error: message }));
+  }
+  return null;
 }
 
 async function getOrgShortId(clerkOrgId) {
@@ -31,8 +44,7 @@ async function getUserInfo(userId, orgId) {
 export async function requireAuth(req, res) {
   const token = getToken(req);
   if (!token) {
-    res.status(401).json({ error: "Neautorizat" });
-    return null;
+    return respond(res, 401, "Neautorizat");
   }
   try {
     const data = await verifyToken(token, {
@@ -41,12 +53,10 @@ export async function requireAuth(req, res) {
     const userId = data?.sub;
     const orgId = data?.org_id || data?.orgId;
     if (!orgId) {
-      res.status(403).json({ error: "Nu faci parte dintr-o organizație. Creează mai întâi o agenție." });
-      return null;
+      return respond(res, 403, "Nu faci parte dintr-o organizație. Creează mai întâi o agenție.");
     }
     if (!userId) {
-      res.status(401).json({ error: "Token invalid" });
-      return null;
+      return respond(res, 401, "Token invalid");
     }
     const [orgShortId, userInfo] = await Promise.all([
       getOrgShortId(orgId),
@@ -55,7 +65,6 @@ export async function requireAuth(req, res) {
     return { userId, orgId, orgShortId, role: userInfo.role, userName: userInfo.name };
   } catch (err) {
     console.error("Clerk verifyToken:", err.message);
-    res.status(401).json({ error: "Token invalid" });
-    return null;
+    return respond(res, 401, "Token invalid");
   }
 }

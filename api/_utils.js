@@ -7,6 +7,24 @@ const MAX_BODY = 1024 * 1024;
 export async function parseBody(req, maxSize = MAX_BODY) {
   if (req._body) return req._body;
 
+  if (req.body !== undefined && req.body !== null && typeof req.body !== "string") {
+    req._body = req.body;
+    return req.body;
+  }
+
+  if (typeof req.text === "function") {
+    try {
+      const text = await req.text();
+      const parsed = JSON.parse(text || "{}");
+      req._body = parsed;
+      return parsed;
+    } catch (e) {
+      const err = new Error("Invalid JSON");
+      err.statusCode = 400;
+      throw err;
+    }
+  }
+
   const len = parseInt(req.headers["content-length"], 10);
   if (len > maxSize) {
     const err = new Error("Payload too large");
