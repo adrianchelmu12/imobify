@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@clerk/clerk-react";
 import { programariStore, clientiStore } from "../data/stores";
 
 const STATUS = ["Toate", "Confirmată", "În așteptare", "Importantă", "Finalizată", "Anulată"];
@@ -198,6 +199,7 @@ function CalendarView({ programari, schimbaStatus, stergeProgramare }) {
 
 export default function Programari() {
   const m = useIsMobile();
+  const { getToken } = useAuth();
   const [programari, setProgramari] = useState([]);
   const [clienti, setClienti] = useState([]);
   const [search, setSearch] = useState("");
@@ -207,14 +209,21 @@ export default function Programari() {
   const [googleEmail, setGoogleEmail] = useState(null);
   const [syncLoading, setSyncLoading] = useState(false);
 
-  const apiFetch = async (path, opts = {}) => {
-    const { getToken } = await import("./Layout.jsx").catch(() => ({}));
-    return fetch(path, opts);
+  const authFetch = async (url, opts = {}) => {
+    const token = await getToken({ template: "api" });
+    return fetch(url, {
+      ...opts,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...opts.headers,
+      },
+    });
   };
 
   const checkGoogleStatus = async () => {
     try {
-      const res = await fetch("/api/organizations?action=google-status");
+      const res = await authFetch("/api/organizations?action=google-status");
       if (res.ok) {
         const data = await res.json();
         setGoogleConnected(data.connected);
@@ -226,9 +235,8 @@ export default function Programari() {
   const syncToGoogle = async (programare) => {
     if (!googleConnected) return;
     try {
-      await fetch("/api/organizations?action=google-sync", {
+      await authFetch("/api/organizations?action=google-sync", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ programare }),
       });
     } catch {}
@@ -237,9 +245,8 @@ export default function Programari() {
   const deleteFromGoogle = async (googleEventId, programareId) => {
     if (!googleConnected) return;
     try {
-      await fetch("/api/organizations?action=google-delete-event", {
+      await authFetch("/api/organizations?action=google-delete-event", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ googleEventId, programareId }),
       });
     } catch {}
@@ -259,7 +266,7 @@ export default function Programari() {
 
   const disconnectGoogle = async () => {
     if (!confirm("Deconectezi Google Calendar? Programările nu vor mai fi sincronizate.")) return;
-    await fetch("/api/organizations?action=google-disconnect", { method: "DELETE" });
+    await authFetch("/api/organizations?action=google-disconnect", { method: "DELETE" });
     setGoogleConnected(false);
     setGoogleEmail(null);
   };
@@ -274,9 +281,8 @@ export default function Programari() {
     if (code) {
       setSyncLoading(true);
       const redirectUri = window.location.origin + "/admin/programari";
-      fetch("/api/organizations?action=google-connect", {
+      authFetch("/api/organizations?action=google-connect", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code, redirectUri }),
       }).then(async (res) => {
         const data = await res.json();
