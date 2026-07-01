@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { clientiStore, programariStore } from "../data/stores";
+import { clientiStore, programariStore, proprietatiStore } from "../data/stores";
 
 const STATUS = ["Toți", "Nou", "Contactat", "Interesat", "Închis"];
 const SURSE = ["Site", "Facebook", "OLX", "Recomandare", "Altă sursă"];
@@ -46,6 +46,7 @@ export default function Clienti() {
   const [editId, setEditId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [viewMode, setViewMode] = useState("tabel");
+  const [selected, setSelected] = useState(new Set());
 
   useEffect(() => {
     setClienti(clientiStore.getAll());
@@ -66,6 +67,45 @@ export default function Clienti() {
   const schimbaStatus = (id, statusNou) => {
     clientiStore.update(id, { status: statusNou, ultimaInteractiune: "Acum" });
     refresh();
+  };
+
+  const toggleSelect = (id) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selected.size === clientiFiltrati.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(clientiFiltrati.map((c) => c.id)));
+    }
+  };
+
+  const bulkDelete = () => {
+    if (selected.size === 0) return;
+    if (!confirm(`Ștergi ${selected.size} clienți selectați?`)) return;
+    selected.forEach((id) => clientiStore.delete(id));
+    setSelected(new Set());
+    refresh();
+  };
+
+  const exportCSV = () => {
+    const items = selected.size > 0 ? clienti.filter((c) => selected.has(c.id)) : clientiFiltrati;
+    const header = "Nume,Telefon,Email,Interes,Buget,Zonă,Status,Sursă\n";
+    const rows = items.map((c) =>
+      `"${(c.nume || "").replace(/"/g, '""')}","${c.telefon || ""}","${c.email || ""}","${c.interes || ""}","${c.buget || ""}","${c.zona || ""}","${c.status || ""}","${c.sursa || ""}"`
+    ).join("\n");
+    const blob = new Blob(["\uFEFF" + header + rows], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `clienti_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const startEdit = (client) => {
@@ -97,6 +137,55 @@ export default function Clienti() {
     return programari.filter((p) => p.client === client.nume);
   };
 
+  const proprietati = proprietatiStore.getAll();
+
+  function matchProprietati(client) {
+    if (!client) return [];
+    const buget = parseFloat((client.buget || "").replace(/[^\d]/g, ""));
+    const interes = (client.interes || "").toLowerCase();
+    const zonaClient = (client.zona || "").toLowerCase();
+
+    return proprietati
+      .filter(p => p.status !== "vandut" && p.status !== "inchiriat")
+      .map(p => {
+        let score = 0;
+        const pret = p.pretNumeric || 0;
+
+        if (buget > 0 && pret > 0) {
+          const diff = Math.abs(pret - buget) / buget;
+          if (diff < 0.1) score += 30;
+          else if (diff < 0.25) score += 15;
+          else if (diff < 0.5) score += 5;
+        }
+
+        const tipProp = (p.tip || "").toLowerCase();
+        if (interes && tipProp) {
+          if (tipProp.includes(interes) || interes.includes(tipProp)) score += 25;
+          else {
+            const iWords = interes.split(/\s+/);
+            const tWords = tipProp.split(/\s+/);
+            if (iWords.some(w => tWords.some(tw => tw.includes(w) || w.includes(tw)))) score += 10;
+          }
+        }
+
+        if (zonaClient) {
+          const addr = typeof p.adresa === "object" ? p.adresa : {};
+          const oras = (addr.oras || addr.city || "").toLowerCase();
+          const cartier = (addr.cartier || addr.district || "").toLowerCase();
+          if (cartier && zonaClient.includes(cartier)) score += 30;
+          else if (oras && zonaClient.includes(oras)) score += 20;
+          else if (zonaClient.split(/\s+/).some(w => oras.includes(w) || cartier.includes(w))) score += 5;
+        }
+
+        if (p.recomandata) score += 5;
+
+        return { ...p, _score: score };
+      })
+      .filter(p => p._score > 0)
+      .sort((a, b) => b._score - a._score)
+      .slice(0, 5);
+  }
+
   const stats = {
     total: clienti.length,
     noi: clienti.filter((c) => c.status === "Nou").length,
@@ -115,6 +204,9 @@ export default function Clienti() {
     if (editId === client.id) {
       return (
         <tr key={client.id} style={{ borderTop: "0.5px solid var(--border-tertiary)", background: "var(--bg-secondary)" }}>
+          <td style={{ padding: "10px 8px 10px 14px" }}>
+            <input type="checkbox" checked={selected.has(client.id)} onChange={() => toggleSelect(client.id)} style={{ cursor: "pointer", accentColor: "var(--primary)" }} />
+          </td>
           <td style={{ padding: "10px 14px" }}><input style={input} value={editForm.nume || ""} onChange={(e) => setEditForm({ ...editForm, nume: e.target.value })} /></td>
           <td style={{ padding: "10px 14px" }}>
             <input style={input} value={editForm.telefon || ""} onChange={(e) => setEditForm({ ...editForm, telefon: e.target.value })} />
@@ -143,9 +235,12 @@ export default function Clienti() {
       );
     }
 
-    return (
-      <tr key={client.id} style={{ borderTop: "0.5px solid var(--border-tertiary)", cursor: "pointer" }} onClick={() => setExpanded(expanded === client.id ? null : client.id)}>
-        <td style={{ padding: "13px 14px" }}>
+      return (
+        <tr key={client.id} style={{ borderTop: "0.5px solid var(--border-tertiary)", cursor: "pointer", background: selected.has(client.id) ? "rgba(99,102,241,0.04)" : undefined }} onClick={() => setExpanded(expanded === client.id ? null : client.id)}>
+          <td style={{ padding: "13px 8px 13px 14px" }} onClick={(e) => e.stopPropagation()}>
+            <input type="checkbox" checked={selected.has(client.id)} onChange={() => toggleSelect(client.id)} style={{ cursor: "pointer", accentColor: "var(--primary)" }} />
+          </td>
+          <td style={{ padding: "13px 14px" }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{client.nume}</div>
           <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 3 }}>{client.zona || "—"}{client.sursa ? ` · ${client.sursa}` : ""}</div>
           <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 4 }}>
@@ -245,9 +340,20 @@ export default function Clienti() {
             </div>
             {!m ? (
               <div style={{ overflowX: "auto" }}>
+                {selected.size > 0 && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", background: "var(--primary-light)", borderBottom: "1px solid rgba(99,102,241,0.2)" }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: "var(--primary)" }}>{selected.size} selectați</span>
+                    <button onClick={bulkDelete} style={{ border: "1px solid var(--danger)", background: "var(--danger-light)", color: "var(--danger)", borderRadius: 8, padding: "5px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>🗑 Șterge</button>
+                    <button onClick={exportCSV} style={{ border: "1px solid var(--primary)", background: "var(--bg-primary)", color: "var(--primary)", borderRadius: 8, padding: "5px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>📥 Export CSV</button>
+                    <button onClick={() => setSelected(new Set())} style={{ border: "none", background: "transparent", color: "var(--text-tertiary)", fontSize: 11, fontWeight: 600, cursor: "pointer", marginLeft: "auto" }}>Deselectează</button>
+                  </div>
+                )}
                 <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 760 }}>
                   <thead>
                     <tr style={{ background: "var(--bg-secondary)", color: "var(--text-tertiary)", fontSize: 11, textAlign: "left" }}>
+                      <th style={{ padding: "11px 8px 11px 14px", width: 36 }}>
+                        <input type="checkbox" checked={selected.size > 0 && selected.size === clientiFiltrati.length} onChange={toggleSelectAll} style={{ cursor: "pointer", accentColor: "var(--primary)" }} />
+                      </th>
                       <th style={{ padding: "11px 14px", fontWeight: 600 }}>Client</th>
                       <th style={{ padding: "11px 14px", fontWeight: 600 }}>Contact</th>
                       <th style={{ padding: "11px 14px", fontWeight: 600 }}>Interes</th>
@@ -261,7 +367,7 @@ export default function Clienti() {
                     {clientiFiltrati.map(renderRow)}
                     {clientiFiltrati.map((client) => expanded === client.id && (
                       <tr key={`exp-${client.id}`}>
-                        <td colSpan={7} style={{ padding: 0, background: "var(--bg-secondary)" }}>
+                        <td colSpan={8} style={{ padding: 0, background: "var(--bg-secondary)" }}>
                           <div style={{ padding: "16px 20px" }}>
                             <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", marginBottom: 12 }}>Programări pentru {client.nume}</div>
                             {programariClient(client.id).length === 0 ? (
@@ -280,6 +386,32 @@ export default function Clienti() {
                                 ))}
                               </div>
                             )}
+                            {(() => {
+                              const recomandate = matchProprietati(client);
+                              if (recomandate.length === 0) return null;
+                              return (
+                                <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px solid var(--border-tertiary)" }}>
+                                  <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", marginBottom: 12 }}>🏠 Proprietăți recomandate</div>
+                                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 10 }}>
+                                    {recomandate.map((p) => (
+                                      <div key={p.id} style={{ padding: 12, borderRadius: 10, background: "var(--bg-primary)", border: "0.5px solid var(--border-tertiary)", cursor: "pointer" }} onClick={() => window.open(`/admin/proprietati`, "_self")}>
+                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 6 }}>
+                                          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{p.titlu}</div>
+                                          <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 10, background: p._score >= 50 ? "#dcfce7" : p._score >= 25 ? "#fef3c7" : "#f3f4f6", color: p._score >= 50 ? "#166534" : p._score >= 25 ? "#92400e" : "#6b7280", whiteSpace: "nowrap" }}>{p._score}%</span>
+                                        </div>
+                                        <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 4 }}>
+                                          {p.pret || p.pretNumeric ? `${Number(p.pretNumeric || p.pret).toLocaleString("ro-RO")} €` : "—"} · {p.tip || "—"}
+                                        </div>
+                                        <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>
+                                          {typeof p.adresa === "object" ? `${p.adresa.cartier || p.adresa.oras || ""}` : (p.adresa || "—")}
+                                        </div>
+                                        {p.recomandata && <div style={{ marginTop: 6, fontSize: 10, color: "#6366f1", fontWeight: 600 }}>⭐ Recomandată</div>}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </div>
                         </td>
                       </tr>

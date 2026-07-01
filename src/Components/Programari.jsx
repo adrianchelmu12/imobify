@@ -3,6 +3,8 @@ import { programariStore, clientiStore } from "../data/stores";
 
 const STATUS = ["Toate", "Confirmată", "În așteptare", "Importantă", "Finalizată", "Anulată"];
 const TIPURI = ["Vizionare", "Întâlnire", "Contract", "Apel", "Altele"];
+const LUNI = ["Ianuarie","Februarie","Martie","Aprilie","Mai","Iunie","Iulie","August","Septembrie","Octombrie","Noiembrie","Decembrie"];
+const ZILE = ["L","M","M","J","V","S","D"];
 
 const statusStyle = {
   Confirmată: { background: "var(--success-light)", color: "var(--success-dark)" },
@@ -12,16 +14,23 @@ const statusStyle = {
   Anulată: { background: "var(--bg-secondary)", color: "var(--text-secondary)" },
 };
 
+const DOT_COLORS = {
+  Confirmată: "#10b981",
+  "În așteptare": "#f59e0b",
+  Importantă: "#ef4444",
+  Finalizată: "#6366f1",
+  Anulată: "#94a3b8",
+};
+
 const page = { padding: "22px 24px" };
 const card = { background: "rgba(255,255,255,0.8)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.6)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-card)" };
+const input = { width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid var(--border-secondary)", background: "var(--bg-primary)", color: "var(--text-primary)", outline: "none", fontSize: 13, boxSizing: "border-box" };
 
 function useIsMobile() {
   const [m, setM] = useState(() => typeof window !== "undefined" && window.innerWidth <= 900);
   useEffect(() => { const r = () => setM(window.innerWidth <= 900); window.addEventListener("resize", r); return () => window.removeEventListener("resize", r); }, []);
   return m;
 }
-
-const input = { width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid var(--border-secondary)", background: "var(--bg-primary)", color: "var(--text-primary)", outline: "none", fontSize: 13, boxSizing: "border-box" };
 
 function formatData(data) {
   if (!data) return "—";
@@ -85,12 +94,115 @@ function ProgramareForm({ clienti, onAdd }) {
   );
 }
 
+function CalendarView({ programari, schimbaStatus, stergeProgramare }) {
+  const now = new Date();
+  const [luna, setLuna] = useState(now.getMonth());
+  const [an, setAn] = useState(now.getFullYear());
+  const [ziSel, setZiSel] = useState(null);
+
+  const zileInLuna = new Date(an, luna + 1, 0).getDate();
+  const primaZi = new Date(an, luna, 1).getDay();
+  const offset = primaZi === 0 ? 6 : primaZi - 1;
+  const aziStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+
+  const progPeZi = {};
+  programari.forEach((p) => {
+    if (!p.data) return;
+    const [a, l, z] = p.data.split("-").map(Number);
+    if (a === an && l === luna + 1) {
+      if (!progPeZi[z]) progPeZi[z] = [];
+      progPeZi[z].push(p);
+    }
+  });
+
+  const prev = () => { if (luna === 0) { setLuna(11); setAn(an-1); } else setLuna(luna-1); setZiSel(null); };
+  const next = () => { if (luna === 11) { setLuna(0); setAn(an+1); } else setLuna(luna+1); setZiSel(null); };
+  const today = () => { setLuna(now.getMonth()); setAn(now.getFullYear()); setZiSel(null); };
+
+  const ziSelData = ziSel ? progPeZi[ziSel] || [] : [];
+  const btn = { border: "1px solid var(--border-secondary)", background: "var(--bg-primary)", color: "var(--text-primary)", borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" };
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+        <button onClick={prev} style={btn}>←</button>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)" }}>{LUNI[luna]} {an}</span>
+          <button onClick={today} style={{ ...btn, fontSize: 11, padding: "4px 8px" }}>Azi</button>
+        </div>
+        <button onClick={next} style={btn}>→</button>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2 }}>
+        {ZILE.map((d) => (
+          <div key={d} style={{ textAlign: "center", fontSize: 11, color: "var(--text-tertiary)", fontWeight: 600, padding: "6px 0" }}>{d}</div>
+        ))}
+        {Array.from({ length: offset }).map((_, i) => <div key={`e${i}`} />)}
+        {Array.from({ length: zileInLuna }).map((_, i) => {
+          const zi = i + 1;
+          const ev = progPeZi[zi] || [];
+          const isToday = aziStr === `${an}-${String(luna+1).padStart(2,"0")}-${String(zi).padStart(2,"0")}`;
+          const isSel = ziSel === zi;
+          return (
+            <div key={zi} onClick={() => setZiSel(isSel ? null : zi)} style={{
+              padding: "5px 3px", minHeight: 48, cursor: "pointer", borderRadius: 8, textAlign: "center",
+              background: isSel ? "rgba(99,102,241,0.1)" : isToday ? "rgba(99,102,241,0.06)" : "transparent",
+              border: isSel ? "2px solid var(--primary)" : isToday ? "1px solid rgba(99,102,241,0.3)" : "1px solid transparent",
+            }}>
+              <div style={{ fontSize: 12, fontWeight: isToday ? 800 : 500, color: isToday ? "var(--primary)" : "var(--text-primary)", marginBottom: 3 }}>{zi}</div>
+              <div style={{ display: "flex", justifyContent: "center", gap: 2, flexWrap: "wrap" }}>
+                {ev.slice(0, 4).map((e, j) => (
+                  <span key={j} style={{ width: 5, height: 5, borderRadius: "50%", background: DOT_COLORS[e.status] || "#6366f1", display: "inline-block" }} />
+                ))}
+              </div>
+              {ev.length > 4 && <div style={{ fontSize: 9, color: "var(--text-tertiary)", marginTop: 1 }}>+{ev.length - 4}</div>}
+            </div>
+          );
+        })}
+      </div>
+      {ziSel && (
+        <div style={{ marginTop: 16, borderTop: "1px solid var(--border-tertiary)", paddingTop: 14 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)", marginBottom: 10 }}>
+            {ziSel} {LUNI[luna]} {an}
+            {ziSelData.length > 0 && <span style={{ fontSize: 12, color: "var(--text-tertiary)", fontWeight: 400, marginLeft: 8 }}>({ziSelData.length} programăr{ziSelData.length === 1 ? "e" : "i"})</span>}
+          </div>
+          {ziSelData.length === 0 ? (
+            <div style={{ color: "var(--text-tertiary)", fontSize: 13, padding: 12 }}>Nicio programare.</div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {ziSelData.sort((a,b) => a.ora.localeCompare(b.ora)).map((pr) => (
+                <div key={pr.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderTop: "0.5px solid var(--border-tertiary)", gap: 8 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: "var(--primary)" }}>{pr.ora}</span>
+                      <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{pr.tip}</span>
+                    </div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", marginBottom: 2 }}>{pr.titlu}</div>
+                    <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>{pr.client} · {pr.telefon}{pr.locatie !== "—" ? ` · ${pr.locatie}` : ""}</div>
+                    {pr.observatii !== "—" && <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 3, fontStyle: "italic" }}>{pr.observatii}</div>}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                    <select value={pr.status} onChange={(e) => schimbaStatus(pr.id, e.target.value)} style={{ ...statusStyle[pr.status], border: "none", outline: "none", fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 20, cursor: "pointer" }}>
+                      {STATUS.filter((s) => s !== "Toate").map((s) => <option key={s}>{s}</option>)}
+                    </select>
+                    <button onClick={() => stergeProgramare(pr.id)} style={{ border: "none", background: "transparent", color: "var(--danger)", fontSize: 16, cursor: "pointer", padding: "2px 4px", lineHeight: 1 }}>×</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Programari() {
   const m = useIsMobile();
   const [programari, setProgramari] = useState([]);
   const [clienti, setClienti] = useState([]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("Toate");
+  const [viewMode, setViewMode] = useState("calendar");
 
   useEffect(() => {
     setProgramari(programariStore.getAll());
@@ -123,11 +235,23 @@ export default function Programari() {
   const azi = new Date().toISOString().slice(0, 10);
   const stats = { total: programari.length, azi: programari.filter((p) => p.data === azi).length, confirmate: programari.filter((p) => p.status === "Confirmată").length, importante: programari.filter((p) => p.status === "Importantă").length };
 
+  const tabBtn = (mode, label) => ({
+    border: "none", borderRadius: 8, padding: "7px 16px", fontSize: 12, fontWeight: 600, cursor: "pointer",
+    background: viewMode === mode ? "var(--primary)" : "var(--bg-secondary)",
+    color: viewMode === mode ? "#fff" : "var(--text-secondary)",
+  });
+
   return (
     <div style={{ ...page, padding: m ? "18px 14px 28px" : "22px 24px" }}>
       <header style={{ marginBottom: 20 }}>
         <div style={{ fontSize: 26, fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.5px", marginBottom: 4 }}>Programări</div>
-        <div style={{ fontSize: 13, color: "var(--text-muted)" }}>Gestionează vizionările, întâlnirile, contractele și apelurile cu clienții.</div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+          <div style={{ fontSize: 13, color: "var(--text-muted)" }}>Gestionează vizionările, întâlnirile, contractele și apelurile cu clienții.</div>
+          <div style={{ display: "flex", gap: 6 }}>
+            <button onClick={() => setViewMode("calendar")} style={tabBtn("calendar", "Calendar")}>📅 Calendar</button>
+            <button onClick={() => setViewMode("list")} style={tabBtn("list", "Listă")}>📋 Listă</button>
+          </div>
+        </div>
       </header>
 
       <section style={{ display: "grid", gridTemplateColumns: m ? "1fr 1fr" : "repeat(4, 1fr)", gap: 12, marginBottom: 18 }}>
@@ -139,84 +263,93 @@ export default function Programari() {
 
       <div style={{ display: "grid", gridTemplateColumns: m ? "1fr" : "1fr 315px", gap: 16, alignItems: "start" }}>
         <section style={card}>
-          <div style={{ padding: 16, borderBottom: "0.5px solid var(--border-tertiary)" }}>
-            <div style={{ display: "grid", gridTemplateColumns: m ? "1fr" : "1fr 180px", gap: 10 }}>
-              <input style={input} placeholder="Caută după client, telefon, locație, tip..." value={search} onChange={(e) => setSearch(e.target.value)} />
-              <select style={input} value={status} onChange={(e) => setStatus(e.target.value)}>{STATUS.map((s) => <option key={s}>{s}</option>)}</select>
-            </div>
-          </div>
-          {!m ? (
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 820 }}>
-                <thead>
-                  <tr style={{ background: "var(--bg-secondary)", color: "var(--text-tertiary)", fontSize: 11, textAlign: "left" }}>
-                    <th style={{ padding: "11px 14px", fontWeight: 600 }}>Data</th><th style={{ padding: "11px 14px", fontWeight: 600 }}>Ora</th><th style={{ padding: "11px 14px", fontWeight: 600 }}>Programare</th><th style={{ padding: "11px 14px", fontWeight: 600 }}>Client</th><th style={{ padding: "11px 14px", fontWeight: 600 }}>Tip</th><th style={{ padding: "11px 14px", fontWeight: 600 }}>Status</th><th style={{ padding: "11px 14px", fontWeight: 600 }}>Actualizare</th><th style={{ padding: "11px 14px", fontWeight: 600 }}>Acțiuni</th>
-                  </tr>
-                </thead>
-                <tbody>
+          {viewMode === "list" && (
+            <>
+              <div style={{ padding: 16, borderBottom: "0.5px solid var(--border-tertiary)" }}>
+                <div style={{ display: "grid", gridTemplateColumns: m ? "1fr" : "1fr 180px", gap: 10 }}>
+                  <input style={input} placeholder="Caută după client, telefon, locație, tip..." value={search} onChange={(e) => setSearch(e.target.value)} />
+                  <select style={input} value={status} onChange={(e) => setStatus(e.target.value)}>{STATUS.map((s) => <option key={s}>{s}</option>)}</select>
+                </div>
+              </div>
+              {!m ? (
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 820 }}>
+                    <thead>
+                      <tr style={{ background: "var(--bg-secondary)", color: "var(--text-tertiary)", fontSize: 11, textAlign: "left" }}>
+                        <th style={{ padding: "11px 14px", fontWeight: 600 }}>Data</th><th style={{ padding: "11px 14px", fontWeight: 600 }}>Ora</th><th style={{ padding: "11px 14px", fontWeight: 600 }}>Programare</th><th style={{ padding: "11px 14px", fontWeight: 600 }}>Client</th><th style={{ padding: "11px 14px", fontWeight: 600 }}>Tip</th><th style={{ padding: "11px 14px", fontWeight: 600 }}>Status</th><th style={{ padding: "11px 14px", fontWeight: 600 }}>Actualizare</th><th style={{ padding: "11px 14px", fontWeight: 600 }}>Acțiuni</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {programariFiltrate.map((pr) => (
+                        <tr key={pr.id} style={{ borderTop: "0.5px solid var(--border-tertiary)" }}>
+                          <td style={{ padding: "13px 14px", fontSize: 12, color: "var(--text-secondary)", whiteSpace: "nowrap" }}>{formatData(pr.data)}</td>
+                          <td style={{ padding: "13px 14px", fontSize: 13, color: "var(--primary)", fontWeight: 700 }}>{pr.ora}</td>
+                          <td style={{ padding: "13px 14px" }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{pr.titlu}</div>
+                            <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 3 }}>{pr.locatie}</div>
+                            <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 3 }}>{pr.observatii}</div>
+                            <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 4 }}>
+                              Adăugat de {pr.createdByName || "—"}
+                              {pr.updatedByName && pr.updatedByName !== pr.createdByName ? ` · Modificat de ${pr.updatedByName}` : ""}
+                            </div>
+                          </td>
+                          <td style={{ padding: "13px 14px" }}>
+                            <div style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 500 }}>{pr.client}</div>
+                            <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 3 }}>{pr.telefon}</div>
+                          </td>
+                          <td style={{ padding: "13px 14px", fontSize: 12, color: "var(--text-secondary)" }}>{pr.tip}</td>
+                          <td style={{ padding: "13px 14px" }}>
+                            <select value={pr.status} onChange={(e) => schimbaStatus(pr.id, e.target.value)}
+                              style={{ ...statusStyle[pr.status], border: "none", outline: "none", fontSize: 11, fontWeight: 600, padding: "4px 9px", borderRadius: 20, cursor: "pointer" }}>
+                              {STATUS.filter((s) => s !== "Toate").map((s) => <option key={s}>{s}</option>)}
+                            </select>
+                          </td>
+                          <td style={{ padding: "13px 14px", fontSize: 12, color: "var(--text-secondary)" }}>{pr.ultimaActualizare || "—"}</td>
+                          <td style={{ padding: "13px 14px" }}>
+                            <button type="button" onClick={() => stergeProgramare(pr.id)} style={{ border: "1px solid var(--border-secondary)", background: "var(--bg-primary)", color: "var(--danger)", borderRadius: 8, padding: "6px 9px", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>Șterge</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {programariFiltrate.length === 0 && <div style={{ padding: 30, textAlign: "center", color: "var(--text-tertiary)", fontSize: 13 }}>Nu există programări.</div>}
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: 12 }}>
+                  {programariFiltrate.length === 0 && <div style={{ padding: 22, textAlign: "center", color: "var(--text-tertiary)", fontSize: 13 }}>Nu există programări.</div>}
                   {programariFiltrate.map((pr) => (
-                    <tr key={pr.id} style={{ borderTop: "0.5px solid var(--border-tertiary)" }}>
-                      <td style={{ padding: "13px 14px", fontSize: 12, color: "var(--text-secondary)", whiteSpace: "nowrap" }}>{formatData(pr.data)}</td>
-                      <td style={{ padding: "13px 14px", fontSize: 13, color: "var(--primary)", fontWeight: 700 }}>{pr.ora}</td>
-                      <td style={{ padding: "13px 14px" }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{pr.titlu}</div>
-                        <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 3 }}>{pr.locatie}</div>
-                        <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 3 }}>{pr.observatii}</div>
+                    <div key={pr.id} style={{ border: "1px solid var(--border-tertiary)", borderRadius: 14, padding: 14, background: "var(--bg-primary)" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 12 }}>
+                        <div>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", marginBottom: 4 }}>{pr.titlu}</div>
+                          <div style={{ fontSize: 12, color: "var(--primary)", fontWeight: 700 }}>{formatData(pr.data)} • {pr.ora}</div>
+                        </div>
+                        <select value={pr.status} onChange={(e) => schimbaStatus(pr.id, e.target.value)}
+                          style={{ ...statusStyle[pr.status], border: "none", outline: "none", borderRadius: 20, padding: "5px 8px", fontSize: 11, fontWeight: 700, maxWidth: 130 }}>
+                          {STATUS.filter((s) => s !== "Toate").map((s) => <option key={s}>{s}</option>)}
+                        </select>
+                      </div>
+                      <div style={{ display: "grid", gap: 10, marginBottom: 14 }}>
+                        <div><div style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: 2 }}>Client</div><div style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 600 }}>{pr.client}</div><div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 2 }}>{pr.telefon}</div></div>
+                        <div><div style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: 2 }}>Locație</div><div style={{ fontSize: 13, color: "var(--text-secondary)" }}>{pr.locatie}</div></div>
+                        <div><div style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: 2 }}>Tip</div><div style={{ fontSize: 13, color: "var(--text-primary)" }}>{pr.tip}</div></div>
+                        <div><div style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: 2 }}>Observații</div><div style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.45 }}>{pr.observatii}</div></div>
+                        <div><div style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: 2 }}>Ultima actualizare</div><div style={{ fontSize: 13, color: "var(--text-secondary)" }}>{pr.ultimaActualizare || "—"}</div></div>
                         <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 4 }}>
                           Adăugat de {pr.createdByName || "—"}
                           {pr.updatedByName && pr.updatedByName !== pr.createdByName ? ` · Modificat de ${pr.updatedByName}` : ""}
                         </div>
-                      </td>
-                      <td style={{ padding: "13px 14px" }}>
-                        <div style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 500 }}>{pr.client}</div>
-                        <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 3 }}>{pr.telefon}</div>
-                      </td>
-                      <td style={{ padding: "13px 14px", fontSize: 12, color: "var(--text-secondary)" }}>{pr.tip}</td>
-                      <td style={{ padding: "13px 14px" }}>
-                        <select value={pr.status} onChange={(e) => schimbaStatus(pr.id, e.target.value)}
-                          style={{ ...statusStyle[pr.status], border: "none", outline: "none", fontSize: 11, fontWeight: 600, padding: "4px 9px", borderRadius: 20, cursor: "pointer" }}>
-                          {STATUS.filter((s) => s !== "Toate").map((s) => <option key={s}>{s}</option>)}
-                        </select>
-                      </td>
-                      <td style={{ padding: "13px 14px", fontSize: 12, color: "var(--text-secondary)" }}>{pr.ultimaActualizare || "—"}</td>
-                      <td style={{ padding: "13px 14px" }}>
-                        <button type="button" onClick={() => stergeProgramare(pr.id)} style={{ border: "1px solid var(--border-secondary)", background: "var(--bg-primary)", color: "var(--danger)", borderRadius: 8, padding: "6px 9px", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>Șterge</button>
-                      </td>
-                    </tr>
+                      </div>
+                      <button type="button" onClick={() => stergeProgramare(pr.id)} style={{ width: "100%", border: "1px solid var(--border-secondary)", background: "var(--bg-primary)", color: "var(--danger)", borderRadius: 10, padding: "10px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Șterge programarea</button>
+                    </div>
                   ))}
-                </tbody>
-              </table>
-              {programariFiltrate.length === 0 && <div style={{ padding: 30, textAlign: "center", color: "var(--text-tertiary)", fontSize: 13 }}>Nu există programări.</div>}
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: 12 }}>
-              {programariFiltrate.length === 0 && <div style={{ padding: 22, textAlign: "center", color: "var(--text-tertiary)", fontSize: 13 }}>Nu există programări.</div>}
-              {programariFiltrate.map((pr) => (
-                <div key={pr.id} style={{ border: "1px solid var(--border-tertiary)", borderRadius: 14, padding: 14, background: "var(--bg-primary)" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 12 }}>
-                    <div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", marginBottom: 4 }}>{pr.titlu}</div>
-                      <div style={{ fontSize: 12, color: "var(--primary)", fontWeight: 700 }}>{formatData(pr.data)} • {pr.ora}</div>
-                    </div>
-                    <select value={pr.status} onChange={(e) => schimbaStatus(pr.id, e.target.value)}
-                      style={{ ...statusStyle[pr.status], border: "none", outline: "none", borderRadius: 20, padding: "5px 8px", fontSize: 11, fontWeight: 700, maxWidth: 130 }}>
-                      {STATUS.filter((s) => s !== "Toate").map((s) => <option key={s}>{s}</option>)}
-                    </select>
-                  </div>
-                  <div style={{ display: "grid", gap: 10, marginBottom: 14 }}>
-                    <div><div style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: 2 }}>Client</div><div style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 600 }}>{pr.client}</div><div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 2 }}>{pr.telefon}</div></div>
-                    <div><div style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: 2 }}>Locație</div><div style={{ fontSize: 13, color: "var(--text-secondary)" }}>{pr.locatie}</div></div>
-                    <div><div style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: 2 }}>Tip</div><div style={{ fontSize: 13, color: "var(--text-primary)" }}>{pr.tip}</div></div>
-                    <div><div style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: 2 }}>Observații</div><div style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.45 }}>{pr.observatii}</div></div>
-                    <div><div style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: 2 }}>Ultima actualizare</div><div style={{ fontSize: 13, color: "var(--text-secondary)" }}>{pr.ultimaActualizare || "—"}</div></div>
-                    <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 4 }}>
-                      Adăugat de {pr.createdByName || "—"}
-                      {pr.updatedByName && pr.updatedByName !== pr.createdByName ? ` · Modificat de ${pr.updatedByName}` : ""}
-                    </div>
-                  </div>
-                  <button type="button" onClick={() => stergeProgramare(pr.id)} style={{ width: "100%", border: "1px solid var(--border-secondary)", background: "var(--bg-primary)", color: "var(--danger)", borderRadius: 10, padding: "10px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Șterge programarea</button>
                 </div>
-              ))}
+              )}
+            </>
+          )}
+          {viewMode === "calendar" && (
+            <div style={{ padding: 16 }}>
+              <CalendarView programari={programari} schimbaStatus={schimbaStatus} stergeProgramare={stergeProgramare} />
             </div>
           )}
         </section>

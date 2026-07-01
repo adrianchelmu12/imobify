@@ -128,21 +128,23 @@ function ECard({ title, children }) {
   return <div style={{ background: "var(--bg-primary)", border: "0.5px solid var(--border-tertiary)", borderRadius: 12, overflow: "hidden", marginBottom: 16 }}><div style={{ padding: "12px 18px", borderBottom: "0.5px solid var(--border-tertiary)", display: "flex", alignItems: "center", gap: 8 }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--primary)", flexShrink: 0 }} /><span style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>{title}</span></div><div style={{ padding: "16px 18px" }}>{children}</div></div>;
 }
 
-function convertFileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-  });
-}
+import { uploadToCloudinary } from "../utils/cloudinary.js";
 
 function EditForm({ proprietate, onSave, onCancel }) {
   const isMobile = useIsMobile();
-  const locatieParts = (proprietate.locatie || "").split(", ");
-  const cartierInit = locatieParts.length > 1 ? locatieParts[0] : "";
-  const orasInit = locatieParts.length > 1 ? locatieParts[1] : locatieParts[0] || "";
   const pretRaw = String(proprietate.pret || "").replace(/[^\d]/g, "");
+
+  const getAdresa = () => {
+    const a = typeof proprietate.adresa === "object" && proprietate.adresa ? proprietate.adresa : {};
+    return {
+      judet: a.judet || proprietate.judet || "Iași",
+      oras: a.oras || a.localitate || proprietate.oras || "Iași",
+      cartier: a.cartier || "",
+      strada: a.strada || proprietate.strada || "",
+      numar: a.numar || proprietate.numar || "",
+      cod_postal: a.cod_postal || proprietate.cod_postal || "",
+    };
+  };
 
   const [form, setForm] = useState({
     titlu: proprietate.titlu || "",
@@ -154,10 +156,29 @@ function EditForm({ proprietate, onSave, onCancel }) {
     badge_exclusivitate: Boolean(proprietate.badge_exclusivitate),
     badge_comision_zero: Boolean(proprietate.badge_comision_zero),
     descriere: proprietate.descriere || "",
-    adresa: { judet: proprietate.judet || "Iași", oras: orasInit || "Iași", cartier: cartierInit, strada: proprietate.strada || "", numar: proprietate.numar || "", cod_postal: proprietate.cod_postal || "" },
-    caracteristici: { nr_camere: proprietate.camere || 2, nr_bai: proprietate.bai || 1, etaj: String(proprietate.etaj || "2"), nr_etaje_total: String(proprietate.etaje_bloc || ""), suprafata_utila: String(proprietate.suprafata || ""), suprafata_totala: String(proprietate.suprafata_totala || ""), an_constructie: String(proprietate.an || ""), tip_imobil: proprietate.tip === "Casă" ? "casa" : "bloc_nou", deschidere_strada: String(proprietate.deschidere_strada || ""), tip_teren: proprietate.tip_teren || "intravilan", nr_fronturi_stradale: String(proprietate.nr_fronturi_stradale || ""), tip_casa: proprietate.tip_casa || "", suprafata_teren: String(proprietate.suprafata_teren || ""), risc_seismic: proprietate.risc_seismic || "", acoperis: proprietate.acoperis || "" },
+    adresa: getAdresa(),
+    caracteristici: (() => {
+      const c = typeof proprietate.caracteristici === "object" && proprietate.caracteristici ? proprietate.caracteristici : {};
+      return {
+        nr_camere: c.nr_camere || proprietate.camere || 2,
+        nr_bai: c.nr_bai || proprietate.bai || 1,
+        etaj: String(c.etaj || proprietate.etaj || "2"),
+        nr_etaje_total: String(c.nr_etaje_total || proprietate.etaje_bloc || ""),
+        suprafata_utila: String(c.suprafata_utila || c.suprafata || proprietate.suprafata || ""),
+        suprafata_totala: String(c.suprafata_totala || proprietate.suprafata_totala || ""),
+        an_constructie: String(c.an_constructie || c.an || proprietate.an || ""),
+        tip_imobil: c.tip_imobil || (proprietate.tip === "Casă" ? "casa" : "bloc_nou"),
+        deschidere_strada: String(c.deschidere_strada || proprietate.deschidere_strada || ""),
+        tip_teren: c.tip_teren || proprietate.tip_teren || "intravilan",
+        nr_fronturi_stradale: String(c.nr_fronturi_stradale || proprietate.nr_fronturi_stradale || ""),
+        tip_casa: c.tip_casa || proprietate.tip_casa || "",
+        suprafata_teren: String(c.suprafata_teren || proprietate.suprafata_teren || ""),
+        risc_seismic: c.risc_seismic || proprietate.risc_seismic || "",
+        acoperis: c.acoperis || proprietate.acoperis || "",
+      };
+    })(),
     dotari: facilitatiArrayToDotariObj(proprietate.dotari || proprietate.facilitati),
-    imagini: proprietate.imagini || [],
+    imagini: proprietate.imagini || proprietate.fotografii || [],
     recomandata: Boolean(proprietate.recomandata),
   });
 
@@ -175,7 +196,9 @@ function EditForm({ proprietate, onSave, onCancel }) {
     const tranzactie = form.tip_tranzactie === "inchiriere" ? "Închiriere" : "Vânzare";
     const pretFormatat = form.tip_tranzactie === "inchiriere" ? `${pretNumeric.toLocaleString("ro-RO")} €/lună` : `${pretNumeric.toLocaleString("ro-RO")} €`;
     const locatie = [form.adresa.cartier, form.adresa.oras].filter(Boolean).join(", ");
-    onSave({ ...proprietate, status: "activ", status_proprietate: form.status, titlu: form.titlu, pret: pretFormatat, pretNumeric, locatie, oras: form.adresa.oras, zona: form.adresa.cartier || form.adresa.oras, judet: form.adresa.judet, strada: form.adresa.strada, numar: form.adresa.numar, cod_postal: form.adresa.cod_postal, tranzactie, tip: form.tip, camere: Number(form.caracteristici.nr_camere) || 1, bai: Number(form.caracteristici.nr_bai) || 1, suprafata: Number(form.caracteristici.suprafata_utila) || 0, suprafata_totala: Number(form.caracteristici.suprafata_totala) || 0, etaj: form.caracteristici.etaj || "—", etaje_bloc: Number(form.caracteristici.nr_etaje_total) || 0, an: Number(form.caracteristici.an_constructie) || "—", descriere: form.descriere, negociabil: form.negociabil, badge_exclusivitate: form.badge_exclusivitate, badge_comision_zero: form.badge_comision_zero, recomandata: form.recomandata, facilitati: dotariObjToFacilitatiArray(form.dotari), dotari: dotariObjToFacilitatiArray(form.dotari), imagini: form.imagini, imagine: form.imagini?.[0] || "" });
+    const { fotografii: _f2, ...rest } = proprietate;
+    const savedAdresa = { strada: form.adresa.strada || "", cartier: form.adresa.cartier || "", localitate: form.adresa.oras || "", oras: form.adresa.oras || "", judet: form.adresa.judet || "", numar: form.adresa.numar || "", cod_postal: form.adresa.cod_postal || "" };
+    onSave({ ...rest, status: "activ", status_proprietate: form.status, titlu: form.titlu, pret: pretFormatat, pretNumeric, locatie, oras: form.adresa.oras, zona: form.adresa.cartier || form.adresa.oras, judet: form.adresa.judet, strada: form.adresa.strada, numar: form.adresa.numar, cod_postal: form.adresa.cod_postal, tranzactie, tip: form.tip, caracteristici: form.caracteristici, descriere: form.descriere, negociabil: form.negociabil, badge_exclusivitate: form.badge_exclusivitate, badge_comision_zero: form.badge_comision_zero, recomandata: form.recomandata, dotari: dotariObjToFacilitatiArray(form.dotari), imagini: form.imagini, imagine: form.imagini?.[0] || "", adresa: savedAdresa });
   };
 
   const row2 = { display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12 };
@@ -237,7 +260,7 @@ function EditForm({ proprietate, onSave, onCancel }) {
           <EInput label="Etaje clădire (total)" type="number" placeholder="8" value={form.caracteristici.nr_etaje_total} onChange={(e) => updCar("nr_etaje_total", e.target.value)} />
           <EInput label="An construcție" type="number" placeholder="2018" min={1900} max={2030} value={form.caracteristici.an_constructie} onChange={(e) => updCar("an_constructie", e.target.value)} />
         </div>
-        <ESelect label="Tip imobil" value={form.caracteristici.tip_imobil} onChange={(e) => updCar("tip_imobil", e.target.value)} options={[{value:"bloc_nou",label:"Bloc nou (după 2000)"},{value:"bloc_vechi",label:"Bloc vechi (înainte de 2000)"},{value:"vila",label:"Vilă"},{value:"casa",label:"Casă individuală"}]} />
+        <ESelect label="Tip imobil" value={form.caracteristici.tip_imobil} onChange={(e) => updCar("tip_imobil", e.target.value)} options={[{value:"bloc nou",label:"Bloc nou (după 2000)"},{value:"bloc_vechi",label:"Bloc vechi (înainte de 2000)"},{value:"vila",label:"Vilă"},{value:"casa",label:"Casă individuală"}]} />
       </ECard>
       <ECard title={`Dotări & facilități (${nrDotari} selectate)`}>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16 }}>
@@ -258,10 +281,14 @@ function EditForm({ proprietate, onSave, onCancel }) {
             const files = Array.from(e.target.files || []);
             const uploaded = [];
             for (const file of files) {
-              const base64 = await convertFileToBase64(file);
-              uploaded.push(base64);
+              try {
+                const url = await uploadToCloudinary(file);
+                uploaded.push(url);
+              } catch (err) { alert("Eroare upload: " + (err.message || "necunoscută")); return; }
             }
-            upd("imagini", [...form.imagini, ...uploaded]);
+            if (uploaded.length > 0) {
+              upd("imagini", [...form.imagini, ...uploaded]);
+            }
           }} />
         </div>
         {form.imagini.length > 0 && (
@@ -289,6 +316,7 @@ export default function AdminProprietati() {
   const [search, setSearch] = useState("");
   const [tranzactie, setTranzactie] = useState("Toate");
   const [editingId, setEditingId] = useState(null);
+  const [selected, setSelected] = useState(new Set());
 
   useEffect(() => { setProprietati(proprietatiStore.getAll()); }, []);
 
@@ -301,7 +329,11 @@ export default function AdminProprietati() {
   };
 
   const salveazaEditare = (proprietateEditata) => {
-    proprietatiStore.update(proprietateEditata.id, proprietateEditata);
+    const { fotografii, adresa: _adr, ...clean } = proprietateEditata;
+    if (_adr && typeof _adr === "object") {
+      clean.adresa = _adr;
+    }
+    proprietatiStore.update(proprietateEditata.id, clean);
     refresh();
     setEditingId(null);
   };
@@ -311,6 +343,46 @@ export default function AdminProprietati() {
     if (!p) return;
     proprietatiStore.update(id, { recomandata: !p.recomandata });
     refresh();
+  };
+
+  const toggleSelect = (id) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selected.size === proprietatiFiltrate.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(proprietatiFiltrate.map((p) => p.id)));
+    }
+  };
+
+  const bulkDelete = () => {
+    if (selected.size === 0) return;
+    if (!confirm(`Ștergi ${selected.size} proprietăți selectate?`)) return;
+    selected.forEach((id) => proprietatiStore.delete(id));
+    setSelected(new Set());
+    refresh();
+  };
+
+  const exportCSV = () => {
+    const items = selected.size > 0 ? proprietati.filter((p) => selected.has(p.id)) : proprietatiFiltrate;
+    const header = "Titlu,Tip,Tranzacție,Preț,Locație,Status\n";
+    const rows = items.map((p) => {
+      const loc = typeof p.adresa === "object" ? (p.adresa.oras || p.adresa.cartier || "") : (p.locatie || "");
+      return `"${(p.titlu || "").replace(/"/g, '""')}","${p.tip || ""}","${p.tranzactie || ""}","${p.pret || ""}","${loc}","${p.status || ""}"`;
+    }).join("\n");
+    const blob = new Blob(["\uFEFF" + header + rows], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `proprietati_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const proprietatiFiltrate = useMemo(() => {
@@ -350,18 +422,32 @@ export default function AdminProprietati() {
           </div>
         </div>
         <div style={{ overflowX: "auto" }}>
+          {selected.size > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", background: "var(--primary-light)", borderBottom: "1px solid rgba(99,102,241,0.2)" }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "var(--primary)" }}>{selected.size} selectate</span>
+              <button onClick={bulkDelete} style={{ border: "1px solid var(--danger)", background: "var(--danger-light)", color: "var(--danger)", borderRadius: 8, padding: "5px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>🗑 Șterge</button>
+              <button onClick={exportCSV} style={{ border: "1px solid var(--primary)", background: "var(--bg-primary)", color: "var(--primary)", borderRadius: 8, padding: "5px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>📥 Export CSV</button>
+              <button onClick={() => setSelected(new Set())} style={{ border: "none", background: "transparent", color: "var(--text-tertiary)", fontSize: 11, fontWeight: 600, cursor: "pointer", marginLeft: "auto" }}>Deselectează</button>
+            </div>
+          )}
           <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 900 }}>
             <thead>
               <tr style={{ background: "var(--bg-secondary)", color: "var(--text-tertiary)", fontSize: 11, textAlign: "left" }}>
+                <th style={{ padding: "11px 8px 11px 14px", width: 36 }}>
+                  <input type="checkbox" checked={selected.size > 0 && selected.size === proprietatiFiltrate.length} onChange={toggleSelectAll} style={{ cursor: "pointer", accentColor: "var(--primary)" }} />
+                </th>
                 <th style={{ padding: "11px 14px", fontWeight: 600 }}>Proprietate</th><th style={{ padding: "11px 14px", fontWeight: 600 }}>Locație</th><th style={{ padding: "11px 14px", fontWeight: 600 }}>Preț</th><th style={{ padding: "11px 14px", fontWeight: 600 }}>Detalii</th><th style={{ padding: "11px 14px", fontWeight: 600 }}>Status</th><th style={{ padding: "11px 14px", fontWeight: 600 }}>Recomandată</th><th style={{ padding: "11px 14px", fontWeight: 600 }}>Acțiuni</th>
               </tr>
             </thead>
             <tbody>
               {proprietatiFiltrate.map((item) => (
-                <tr key={item.id} style={{ borderTop: "0.5px solid var(--border-tertiary)" }}>
+                <tr key={item.id} style={{ borderTop: "0.5px solid var(--border-tertiary)", background: selected.has(item.id) ? "rgba(99,102,241,0.04)" : undefined }}>
+                  <td style={{ padding: "13px 8px 13px 14px" }}>
+                    <input type="checkbox" checked={selected.has(item.id)} onChange={() => toggleSelect(item.id)} style={{ cursor: "pointer", accentColor: "var(--primary)" }} />
+                  </td>
                   <td style={{ padding: "13px 14px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <img loading="lazy" src={item.imagini?.[0] || item.imagine || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=80"} alt={item.titlu} style={{ width: 58, height: 42, objectFit: "cover", borderRadius: 8, flexShrink: 0 }} />
+                      <img loading="lazy" src={(item.imagini || item.fotografii)?.[0] || item.imagine || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=80"} alt={item.titlu} style={{ width: 58, height: 42, objectFit: "cover", borderRadius: 8, flexShrink: 0 }} />
                       <div><div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>{item.titlu}</div><div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 2 }}>{item.tip} · {item.tranzactie}</div><div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 4 }}>Adăugat de {item.createdByName || "—"}{item.updatedByName && item.updatedByName !== item.createdByName ? ` · Modificat de ${item.updatedByName}` : ""}</div></div>
                     </div>
                   </td>
@@ -370,9 +456,9 @@ export default function AdminProprietati() {
                   <td style={{ padding: "13px 14px", fontSize: 12, color: "var(--text-secondary)" }}>{item.camere} camere · {item.suprafata} m²</td>
                   <td style={{ padding: "13px 14px" }}>
                     <span style={{ padding: "4px 9px", borderRadius: 999, fontSize: 11, fontWeight: 600,
-                      background: item.status === "disponibil" ? "var(--success-light)" : item.status === "vandut" ? "var(--danger-light)" : "var(--bg-secondary)",
-                      color: item.status === "disponibil" ? "var(--success-dark)" : item.status === "vandut" ? "var(--danger)" : "var(--text-secondary)" }}>
-                      {item.status === "disponibil" ? "Disponibil" : item.status === "vandut" ? "Vândut" : "Închiriat"}
+                      background: item.status === "activ" ? "var(--success-light)" : item.status === "vandut" ? "var(--danger-light)" : item.status === "inchiriat" ? "#eef2ff" : "var(--bg-secondary)",
+                      color: item.status === "activ" ? "var(--success-dark)" : item.status === "vandut" ? "var(--danger)" : item.status === "inchiriat" ? "#6366f1" : "var(--text-secondary)" }}>
+                      {item.status === "activ" ? "Activ" : item.status === "vandut" ? "Vândut" : item.status === "inchiriat" ? "Închiriat" : item.status}
                     </span>
                   </td>
                   <td style={{ padding: "13px 14px" }}>
@@ -386,7 +472,7 @@ export default function AdminProprietati() {
                   </td>
                 </tr>
               ))}
-              {proprietatiFiltrate.length === 0 && <tr><td colSpan={7} style={{ padding: 30, textAlign: "center", color: "var(--text-tertiary)", fontSize: 13 }}>Nu există proprietăți.</td></tr>}
+              {proprietatiFiltrate.length === 0 && <tr><td colSpan={8} style={{ padding: 30, textAlign: "center", color: "var(--text-tertiary)", fontSize: 13 }}>Nu există proprietăți.</td></tr>}
             </tbody>
           </table>
         </div>
