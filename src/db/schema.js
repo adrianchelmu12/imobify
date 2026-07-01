@@ -214,3 +214,16 @@ export const organizations = pgTable("organizations", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at"),
 });
+
+export const googleTokens = pgTable("google_tokens", {
+  id: bigint("id", { mode: "number" }).primaryKey(),
+  userId: text("user_id").notNull().unique(),
+  orgId: text("org_id").notNull(),
+  accessToken: text("access_token").notNull(),
+  refreshToken: text("refresh_token"),
+  expiryDate: bigint("expiry_date", { mode: "number" }),
+  calendarId: text("calendar_id").default("primary"),
+  email: text("email"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at"),
+});

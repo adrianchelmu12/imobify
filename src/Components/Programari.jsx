@@ -203,10 +203,92 @@ export default function Programari() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("Toate");
   const [viewMode, setViewMode] = useState("calendar");
+  const [googleConnected, setGoogleConnected] = useState(false);
+  const [googleEmail, setGoogleEmail] = useState(null);
+  const [syncLoading, setSyncLoading] = useState(false);
+
+  const apiFetch = async (path, opts = {}) => {
+    const { getToken } = await import("./Layout.jsx").catch(() => ({}));
+    return fetch(path, opts);
+  };
+
+  const checkGoogleStatus = async () => {
+    try {
+      const res = await fetch("/api/google-calendar?action=status");
+      if (res.ok) {
+        const data = await res.json();
+        setGoogleConnected(data.connected);
+        setGoogleEmail(data.email);
+      }
+    } catch {}
+  };
+
+  const syncToGoogle = async (programare) => {
+    if (!googleConnected) return;
+    try {
+      await fetch("/api/google-calendar?action=sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ programare }),
+      });
+    } catch {}
+  };
+
+  const deleteFromGoogle = async (googleEventId, programareId) => {
+    if (!googleConnected) return;
+    try {
+      await fetch("/api/google-calendar?action=delete-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ googleEventId, programareId }),
+      });
+    } catch {}
+  };
+
+  const connectGoogle = () => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+    if (!clientId || clientId.includes("your-client")) {
+      alert("Configurează VITE_GOOGLE_CLIENT_ID și GOOGLE_CLIENT_SECRET în environment variables.");
+      return;
+    }
+    const redirectUri = window.location.origin + "/admin/programari";
+    const scope = "https://www.googleapis.com/auth/calendar.events";
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&access_type=offline&prompt=consent`;
+    window.location.href = authUrl;
+  };
+
+  const disconnectGoogle = async () => {
+    if (!confirm("Deconectezi Google Calendar? Programările nu vor mai fi sincronizate.")) return;
+    await fetch("/api/google-calendar", { method: "DELETE" });
+    setGoogleConnected(false);
+    setGoogleEmail(null);
+  };
 
   useEffect(() => {
     setProgramari(programariStore.getAll());
     setClienti(clientiStore.getAll());
+    checkGoogleStatus();
+
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    if (code) {
+      setSyncLoading(true);
+      const redirectUri = window.location.origin + "/admin/programari";
+      fetch("/api/google-calendar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, redirectUri }),
+      }).then(async (res) => {
+        const data = await res.json();
+        if (data.ok) {
+          setGoogleConnected(true);
+          setGoogleEmail(data.email);
+        }
+      }).catch(() => {}).finally(() => {
+        setSyncLoading(false);
+        window.history.replaceState({}, "", "/admin/programari");
+      });
+    }
   }, []);
 
   const refresh = () => {
@@ -216,13 +298,23 @@ export default function Programari() {
 
   const stergeProgramare = (id) => {
     if (!confirm("Sigur vrei să ștergi această programare?")) return;
+    const pr = programari.find(p => p.id === id);
     programariStore.delete(id);
+    if (pr) deleteFromGoogle(pr.googleEventId, pr.id);
     refresh();
   };
 
   const schimbaStatus = (id, statusNou) => {
     programariStore.update(id, { status: statusNou, ultimaActualizare: "Acum" });
+    const pr = programari.find(p => p.id === id);
+    if (pr) syncToGoogle({ ...pr, status: statusNou });
     refresh();
+  };
+
+  const onAddProgramare = (programareNoua) => {
+    const added = programariStore.add(programareNoua);
+    refresh();
+    if (added) syncToGoogle(added);
   };
 
   const programariFiltrate = useMemo(() => {
@@ -247,7 +339,21 @@ export default function Programari() {
         <div style={{ fontSize: 26, fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.5px", marginBottom: 4 }}>Programări</div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
           <div style={{ fontSize: 13, color: "var(--text-muted)" }}>Gestionează vizionările, întâlnirile, contractele și apelurile cu clienții.</div>
-          <div style={{ display: "flex", gap: 6 }}>
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            {syncLoading ? (
+              <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>Conectare...</span>
+            ) : googleConnected ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 11, color: "var(--success-dark)", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#10b981", display: "inline-block" }} /> {googleEmail || "Conectat"}
+                </span>
+                <button onClick={disconnectGoogle} style={{ border: "1px solid var(--border-secondary)", background: "var(--bg-primary)", color: "var(--text-secondary)", borderRadius: 6, padding: "3px 8px", fontSize: 10, cursor: "pointer" }}>Deconectează</button>
+              </div>
+            ) : (
+              <button onClick={connectGoogle} style={{ border: "none", borderRadius: 8, padding: "6px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer", background: "var(--bg-secondary)", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 4 }}>
+                📅 Conectează Google Calendar
+              </button>
+            )}
             <button onClick={() => setViewMode("calendar")} style={tabBtn("calendar", "Calendar")}>📅 Calendar</button>
             <button onClick={() => setViewMode("list")} style={tabBtn("list", "Listă")}>📋 Listă</button>
           </div>
@@ -353,7 +459,7 @@ export default function Programari() {
             </div>
           )}
         </section>
-        <ProgramareForm clienti={clienti} onAdd={(programareNoua) => { programariStore.add(programareNoua); refresh(); }} />
+        <ProgramareForm clienti={clienti} onAdd={onAddProgramare} />
       </div>
     </div>
   );
