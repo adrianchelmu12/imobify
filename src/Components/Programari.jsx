@@ -292,8 +292,14 @@ export default function Programari() {
         if (data.ok) {
           setGoogleConnected(true);
           setGoogleEmail(data.email);
+        } else {
+          console.error("Google connect failed:", data.error);
+          alert("Eroare conectare: " + (data.error || "necunoscută"));
         }
-      }).catch(() => {}).finally(() => {
+      }).catch((err) => {
+        console.error("Google connect network error:", err);
+        alert("Eroare la conectare. Verifică consola.");
+      }).finally(() => {
         setSyncLoading(false);
         window.history.replaceState({}, "", "/admin/programari");
       });
