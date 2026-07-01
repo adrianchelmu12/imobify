@@ -629,7 +629,7 @@ function Sidebar() {
                 lineHeight: 1.2,
               }}
             >
-              Abu Imobiliare
+              Imobify CRM
             </div>
             <div style={{ fontSize: 10, color: "var(--text-tertiary)" }}>
               Panou administrare
@@ -1512,15 +1512,7 @@ function Pas2({ date, erori, onChange }) {
   );
 }
 
-const convertToBase64 = (file) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.readAsDataURL(file);
-
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-  });
+import { uploadToCloudinary } from "../utils/cloudinary.js";
 
 // ─── PAS 3: Fotografii ────────────────────────────────────────────────────────
 
@@ -1533,7 +1525,7 @@ function Pas3({ date, onChange, imaginiExistente = [], onStergeImagine }) {
     const noiFotos = await Promise.all(
       arr.map(async (file, index) => ({
         id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        preview: await convertToBase64(file),
+        preview: await uploadToCloudinary(file),
         name: file.name,
         isPrimara: date.fotografii.length === 0 && index === 0,
       })),
@@ -2309,15 +2301,16 @@ export default function AdaugaProprietate() {
       },
       dotari: labelsToDotariObj(data.dotari || data.facilitati),
       fotografii: [],
-      imagine: data.imagini?.[0] || "",
+      imagine: (data.imagini || data.fotografii)?.[0] || data.imagine || "",
       status: data.status === "vandut" || data.status === "inchiriat" ? data.status : "activ",
       status_proprietate: data.status || "disponibil",
       recomandata: data.recomandata !== false,
       agent_id: String(data.agent_id || ""),
       disponibil_din: "",
     });
-    if (data.imagini?.length) {
-      setImaginiExistente(data.imagini);
+    const existingImages = data.imagini || data.fotografii || [];
+    if (existingImages.length) {
+      setImaginiExistente(existingImages);
     }
     setLoadingEdit(false);
   }, [editId]);
@@ -2407,6 +2400,35 @@ export default function AdaugaProprietate() {
       risc_seismic: date.caracteristici.risc_seismic || null,
       acoperis: date.caracteristici.acoperis || null,
       agent_id: date.agent_id || null,
+      caracteristici: {
+        nr_camere: date.tip === "Terenuri" ? null : Number(date.caracteristici.nr_camere) || 1,
+        nr_bai: date.tip === "Terenuri" ? null : Number(date.caracteristici.nr_bai) || 1,
+        etaj: date.caracteristici.etaj || "—",
+        nr_etaje_total: date.caracteristici.nr_etaje_total || null,
+        suprafata_utila: date.caracteristici.suprafata_utila || "",
+        suprafata_totala: date.caracteristici.suprafata_totala || "",
+        an_constructie: date.caracteristici.an_constructie || "",
+        tip_imobil: date.caracteristici.tip_imobil || "",
+        deschidere_strada: date.caracteristici.deschidere_strada || "",
+        tip_teren: date.caracteristici.tip_teren || "intravilan",
+        nr_fronturi_stradale: date.caracteristici.nr_fronturi_stradale || "",
+        tip_casa: date.caracteristici.tip_casa || "",
+        suprafata_teren: date.caracteristici.suprafata_teren || "",
+        lat: date.caracteristici.lat || null,
+        lng: date.caracteristici.lng || null,
+        compartimentare: date.caracteristici.compartimentare || null,
+        risc_seismic: date.caracteristici.risc_seismic || null,
+        acoperis: date.caracteristici.acoperis || null,
+      },
+      adresa: {
+        judet: date.adresa.judet || "",
+        oras: date.adresa.orasCustom || date.adresa.oras || "",
+        localitate: date.adresa.orasCustom || date.adresa.oras || "",
+        cartier: date.adresa.cartierCustom || date.adresa.cartier || "",
+        strada: date.adresa.strada || "",
+        numar: date.adresa.numar || "",
+        cod_postal: date.adresa.cod_postal || "",
+      },
     };
 
     if (isEdit) {

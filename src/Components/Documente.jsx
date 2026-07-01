@@ -19,14 +19,7 @@ function formatDate(d) {
   return new Date(d + "T12:00:00").toLocaleDateString("ro-RO", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-function convertFileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve({ name: file.name, data: reader.result, size: file.size, type: file.type });
-    reader.onerror = reject;
-  });
-}
+import { uploadToCloudinary } from "../utils/cloudinary.js";
 
 function formatSize(bytes) {
   if (!bytes) return "";
@@ -64,7 +57,7 @@ export default function Documente() {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const result = await convertFileToBase64(file);
+      const result = await uploadToCloudinary(file);
       setEditForm((p) => ({ ...p, fisier: result }));
     } catch { alert("Eroare la încărcare."); }
   };
@@ -216,7 +209,7 @@ function DocForm({ onAdd, onCancel }) {
     if (!file) return;
     setUploading(true);
     try {
-      const result = await convertFileToBase64(file);
+      const result = await uploadToCloudinary(file);
       upd("fisier", result);
     } catch { alert("Eroare la încărcare."); }
     setUploading(false);

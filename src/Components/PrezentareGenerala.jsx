@@ -113,7 +113,7 @@ export default function PrezentareGenerala() {
   const azi = new Date().toISOString().slice(0, 10);
   const programariAzi = programari.filter((p) => p.data === azi).length;
   const total = proprietati.length;
-  const disponibile = proprietati.filter((p) => p.status === "disponibil").length;
+  const disponibile = proprietati.filter((p) => p.status === "disponibil" || p.status === "activ").length;
   const vandute = proprietati.filter((p) => p.status === "vandut" || p.status === "inchiriat").length;
   const vanzare = proprietati.filter((p) => p.tranzactie === "Vânzare").length;
   const inchiriere = proprietati.filter((p) => p.tranzactie === "Închiriere").length;
@@ -298,7 +298,7 @@ export default function PrezentareGenerala() {
                   border: "1px solid var(--border-tertiary)", transition: "all 0.2s ease",
                 }}>
                   <img loading="lazy"
-                    src={item.imagini?.[0] || item.imagine || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=80"}
+                    src={(item.imagini || item.fotografii)?.[0] || item.imagine || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=80"}
                     alt={item.titlu}
                     style={{ width: 68, height: 52, borderRadius: 12, objectFit: "cover", flexShrink: 0 }}
                   />
@@ -315,10 +315,10 @@ export default function PrezentareGenerala() {
                   </div>
                   <span style={{
                     padding: "5px 12px", borderRadius: 999,
-                    background: item.status === "disponibil" ? "var(--success-light)" : "var(--bg-tertiary)",
-                    color: item.status === "disponibil" ? "var(--success-dark)" : "var(--text-tertiary)",
+                    background: (item.status === "disponibil" || item.status === "activ") ? "var(--success-light)" : "var(--bg-tertiary)",
+                    color: (item.status === "disponibil" || item.status === "activ") ? "var(--success-dark)" : "var(--text-tertiary)",
                     fontSize: 11, fontWeight: 600, whiteSpace: "nowrap", border: "1px solid",
-                    borderColor: item.status === "disponibil" ? "rgba(16,185,129,0.2)" : "var(--border-tertiary)",
+                    borderColor: (item.status === "disponibil" || item.status === "activ") ? "rgba(16,185,129,0.2)" : "var(--border-tertiary)",
                   }}>
                     {item.status}
                   </span>

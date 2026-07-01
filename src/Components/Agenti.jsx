@@ -7,14 +7,7 @@ const card = { background: "rgba(255,255,255,0.8)", backdropFilter: "blur(20px)"
 const inputStyle = { width: "100%", padding: "10px 14px", fontSize: 13, borderRadius: 10, border: "0.5px solid var(--border-secondary)", background: "var(--bg-primary)", color: "var(--text-primary)", boxSizing: "border-box", outline: "none" };
 const labelStyle = { display: "block", fontSize: 11, fontWeight: 700, marginBottom: 4, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.3px" };
 
-function convertFileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-  });
-}
+import { uploadToCloudinary } from "../utils/cloudinary.js";
 
 export default function Agenti() {
   const [agenti, setAgenti] = useState([]);
@@ -77,7 +70,7 @@ export default function Agenti() {
     if (!file) return;
     setUploading(true);
     try {
-      const base64 = await convertFileToBase64(file);
+      const base64 = await uploadToCloudinary(file);
       setForm((p) => ({ ...p, poza: base64 }));
     } catch (err) { alert("Eroare upload: " + (err.message || err)); }
     setUploading(false);

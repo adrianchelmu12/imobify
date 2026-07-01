@@ -30,14 +30,7 @@ function useIsMobile() {
   return m;
 }
 
-function convertFileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve({ name: file.name, data: reader.result });
-    reader.onerror = reject;
-  });
-}
+import { uploadToCloudinary } from "../utils/cloudinary.js";
 
 function ProiectForm({ onAdd, onCancel }) {
   const m = useIsMobile();
@@ -70,7 +63,7 @@ function ProiectForm({ onAdd, onCancel }) {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    try { const r = await convertFileToBase64(file); upd("imagine", r); } catch { alert("Eroare upload."); }
+    try { const r = await uploadToCloudinary(file); upd("imagine", r); } catch { alert("Eroare upload."); }
     setUploading(false);
   };
 
@@ -78,7 +71,7 @@ function ProiectForm({ onAdd, onCancel }) {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    try { const r = await convertFileToBase64(file); upd("document", r); } catch { alert("Eroare upload."); }
+    try { const r = await uploadToCloudinary(file); upd("document", r); } catch { alert("Eroare upload."); }
     setUploading(false);
   };
 
@@ -177,12 +170,12 @@ export default function Proiecte() {
   const handleEditImage = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    try { const r = await convertFileToBase64(file); setEditForm((p) => ({ ...p, imagine: r })); } catch { alert("Eroare."); }
+    try { const r = await uploadToCloudinary(file); setEditForm((p) => ({ ...p, imagine: r })); } catch { alert("Eroare."); }
   };
   const handleEditDoc = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    try { const r = await convertFileToBase64(file); setEditForm((p) => ({ ...p, document: r })); } catch { alert("Eroare."); }
+    try { const r = await uploadToCloudinary(file); setEditForm((p) => ({ ...p, document: r })); } catch { alert("Eroare."); }
   };
 
   const stats = {

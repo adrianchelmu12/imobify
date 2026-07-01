@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { getUnreadCount, getUnread, markAsRead, markAllAsRead, sterge, genereazaNotificari, getAll } from "../data/notificariStore";
 import {
   HiOutlineBell,
@@ -34,11 +35,30 @@ function formatTimp(data) {
   return `${zile}z`;
 }
 
+const NOTIF_ROUTES = {
+  calendar: "/admin/programari",
+  task: "/admin/taskuri",
+  client: "/admin/clienti",
+  bani: "/admin/comisioane",
+  casa: "/admin/proprietati",
+};
+
 export default function NotificationBell({ position = "bottom" }) {
   const [count, setCount] = useState(0);
   const [open, setOpen] = useState(false);
   const [list, setList] = useState([]);
   const ref = useRef();
+  const navigate = useNavigate();
+
+  const handleClick = (n) => {
+    markAsRead(n.id);
+    if (n.cheie?.startsWith("clienti")) {
+      navigate("/admin/clienti");
+    } else if (NOTIF_ROUTES[n.tip]) {
+      navigate(NOTIF_ROUTES[n.tip]);
+    }
+    setOpen(false);
+  };
 
   const refresh = () => {
     setCount(getUnreadCount());
@@ -193,7 +213,7 @@ export default function NotificationBell({ position = "bottom" }) {
                 return (
                   <div
                     key={n.id}
-                    onClick={() => { markAsRead(n.id); }}
+                    onClick={() => handleClick(n)}
                     style={{
                       display: "flex",
                       gap: 12,
@@ -231,7 +251,7 @@ export default function NotificationBell({ position = "bottom" }) {
                       </div>
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0 }}>
-                      <span style={{ fontSize: 10, color: "rgba(255,255,255,0.25)" }}>{formatTimp(n.data)}</span>
+                      <span style={{ fontSize: 10, color: "rgba(255,255,255,0.25)" }}>{formatTimp(n.createdAt || n.created_at || n.data || new Date())}</span>
                       {n.prioritate === "high" && (
                         <span style={{
                           width: 6, height: 6, borderRadius: "50%",

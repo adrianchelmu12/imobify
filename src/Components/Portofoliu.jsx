@@ -56,7 +56,7 @@ export default function Portofoliu() {
     setProprietati(proprietatiStore.getAll());
   }, []);
 
-  const disponibile = proprietati.filter((p) => p.status === "disponibil");
+  const disponibile = proprietati.filter((p) => p.status === "disponibil" || p.status === "activ");
 
   const zone = useMemo(() => {
     const dinDate = new Set(proprietati.map((p) => p.zona || p.oras).filter(Boolean));
@@ -97,7 +97,7 @@ export default function Portofoliu() {
   const openDetail = (p) => { setSelected(p); setImgIndex(0); document.body.style.overflow = "hidden"; };
   const closeDetail = () => { setSelected(null); document.body.style.overflow = ""; };
 
-  const heroImg = disponibile[heroIndex]?.imagini?.[0] || disponibile[heroIndex]?.imagine || null;
+  const heroImg = (disponibile[heroIndex]?.imagini || disponibile[heroIndex]?.fotografii)?.[0] || disponibile[heroIndex]?.imagine || null;
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-tertiary)", fontFamily: "var(--font-sans)" }}>
@@ -242,7 +242,7 @@ export default function Portofoliu() {
                 onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "var(--shadow-sm)"; }}
               >
                 <div style={{ position: "relative", height: 220, overflow: "hidden", background: "var(--bg-secondary)" }}>
-                  <img src={p.imagini?.[0] || p.imagine || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=80"}
+                  <img src={(p.imagini || p.fotografii)?.[0] || p.imagine || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=80"}
                     alt={p.titlu}
                     style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "transform 0.5s ease" }}
                     onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.05)"; }}
@@ -308,25 +308,25 @@ export default function Portofoliu() {
 
           {/* Image Gallery */}
           <div style={{ padding: 24, maxWidth: 1100, margin: "0 auto" }}>
-            {selected.imagini?.length > 0 ? (
+            {(selected.imagini || selected.fotografii)?.length > 0 ? (
               <>
                 <div style={{
                   position: "relative", borderRadius: 20, overflow: "hidden",
                   height: 450, background: "var(--bg-secondary)", marginBottom: 16,
                   boxShadow: "var(--shadow-lg)",
                 }}>
-                  <img src={selected.imagini[imgIndex]}
+                  <img src={(selected.imagini || selected.fotografii)[imgIndex]}
                     alt={`${selected.titlu} — imaginea ${imgIndex + 1}`}
                     style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  {selected.imagini.length > 1 && (
+                  {(selected.imagini || selected.fotografii).length > 1 && (
                     <>
-                      <button onClick={() => setImgIndex((p) => (p - 1 + selected.imagini.length) % selected.imagini.length)}
+                      <button onClick={() => setImgIndex((p) => (p - 1 + (selected.imagini || selected.fotografii).length) % (selected.imagini || selected.fotografii).length)}
                         style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)",
                           border: "none", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", color: "#fff",
                           width: 42, height: 42, borderRadius: "50%", cursor: "pointer", fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center" }}>
                         ‹
                       </button>
-                      <button onClick={() => setImgIndex((p) => (p + 1) % selected.imagini.length)}
+                      <button onClick={() => setImgIndex((p) => (p + 1) % (selected.imagini || selected.fotografii).length)}
                         style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)",
                           border: "none", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", color: "#fff",
                           width: 42, height: 42, borderRadius: "50%", cursor: "pointer", fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -337,7 +337,7 @@ export default function Portofoliu() {
                 </div>
                 {/* Thumbnails */}
                 <div style={{ display: "flex", gap: 8, marginBottom: 28, overflowX: "auto", paddingBottom: 4 }}>
-                  {selected.imagini.map((img, i) => (
+                  {(selected.imagini || selected.fotografii).map((img, i) => (
                     <div key={i} onClick={() => setImgIndex(i)}
                       style={{
                         width: 80, height: 60, borderRadius: 10, overflow: "hidden", cursor: "pointer", flexShrink: 0,

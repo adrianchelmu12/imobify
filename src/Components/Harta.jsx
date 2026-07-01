@@ -72,30 +72,38 @@ export default function Harta() {
 
   const refresh = () => setProprietati(proprietatiStore.getAll());
 
-  const cuCoordonate = proprietati.filter((p) => p.lat && p.lng);
-  const faraCoordonate = proprietati.filter((p) => !p.lat || !p.lng);
+  const getLat = (p) => p.lat || (typeof p.caracteristici === "object" && p.caracteristici?.lat) || null;
+  const getLng = (p) => p.lng || (typeof p.caracteristici === "object" && p.caracteristici?.lng) || null;
+  const formatAdresa = (a) => {
+    if (!a) return "";
+    if (typeof a === "string") return a;
+    if (typeof a === "object") return [a.strada, a.cartier, a.oras || a.localitate, a.judet].filter(Boolean).join(", ");
+    return "";
+  };
+  const cuCoordonate = proprietati.filter((p) => getLat(p) && getLng(p));
+  const faraCoordonate = proprietati.filter((p) => !getLat(p) || !getLng(p));
 
   const filtrate = proprietati.filter((p) => {
-    const matchSearch = !search || `${p.titlu || ""} ${p.adresa || ""} ${p.tip || ""} ${p.zona || ""}`.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = !search || `${p.titlu || ""} ${formatAdresa(p.adresa) || ""} ${p.tip || ""} ${p.zona || ""}`.toLowerCase().includes(search.toLowerCase());
     const matchStatus = filter === "toate" || p.status === filter;
     return matchSearch && matchStatus;
   });
 
   const filtrateCuCoordonate = cuCoordonate.filter((p) => {
-    const matchSearch = !search || `${p.titlu || ""} ${p.adresa || ""}`.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = !search || `${p.titlu || ""} ${formatAdresa(p.adresa) || ""}`.toLowerCase().includes(search.toLowerCase());
     const matchStatus = filter === "toate" || p.status === filter;
     return matchSearch && matchStatus;
   });
 
   const center = filtrateCuCoordonate.length > 0
-    ? [Number(filtrateCuCoordonate[0].lat), Number(filtrateCuCoordonate[0].lng)]
+    ? [Number(getLat(filtrateCuCoordonate[0])), Number(getLng(filtrateCuCoordonate[0]))]
     : IASI_CENTER;
 
   const selectedProp = selectedId ? proprietati.find((p) => String(p.id) === String(selectedId)) : null;
 
   const handleMapClick = (latlng) => {
     if (!pinMode || !selectedId) return;
-    proprietatiStore.update(selectedId, { lat: String(latlng.lat), lng: String(latlng.lng) });
+    proprietatiStore.update(selectedId, { caracteristici: { ...selectedProp?.caracteristici, lat: String(latlng.lat), lng: String(latlng.lng) } });
     refresh();
     setPinMode(false);
   };
@@ -103,8 +111,10 @@ export default function Harta() {
   const selecteazaProp = (id) => {
     setSelectedId(id);
     const prop = proprietati.find((p) => String(p.id) === String(id));
-    if (prop?.lat && prop?.lng) {
-      setFlyTo([Number(prop.lat), Number(prop.lng)]);
+    const pLat = getLat(prop);
+    const pLng = getLng(prop);
+    if (pLat && pLng) {
+      setFlyTo([Number(pLat), Number(pLng)]);
       setPinMode(false);
     } else {
       setPinMode(true);
@@ -114,7 +124,8 @@ export default function Harta() {
 
   const stergeCoordonate = (id) => {
     if (!confirm("Ștergi coordonatele acestei proprietăți?")) return;
-    proprietatiStore.update(id, { lat: null, lng: null });
+    const prop = proprietati.find((p) => String(p.id) === String(id));
+    proprietatiStore.update(id, { caracteristici: { ...(prop?.caracteristici || {}), lat: null, lng: null } });
     refresh();
     if (String(selectedId) === String(id)) { setSelectedId(null); setPinMode(false); }
   };
@@ -153,7 +164,7 @@ export default function Harta() {
 
       {pinMode && selectedProp && (
         <div style={{ marginBottom: 12, padding: "10px 16px", borderRadius: 10, background: "var(--warning-light)", color: "var(--warning-dark)", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span>📍 Dă click pe hartă pentru a seta coordonatele pentru: <strong>{selectedProp.titlu || selectedProp.adresa || `ID: ${selectedProp.id}`}</strong></span>
+          <span>📍 Dă click pe hartă pentru a seta coordonatele pentru: <strong>{selectedProp.titlu || formatAdresa(selectedProp.adresa) || `ID: ${selectedProp.id}`}</strong></span>
           <button onClick={() => setPinMode(false)} style={{ border: "none", background: "none", color: "var(--warning-dark)", cursor: "pointer", fontSize: 18, fontWeight: 700 }}>×</button>
         </div>
       )}
@@ -171,20 +182,20 @@ export default function Harta() {
             {filtrateCuCoordonate.map((p) => (
               <Marker
                 key={p.id}
-                position={[Number(p.lat), Number(p.lng)]}
+                position={[Number(getLat(p)), Number(getLng(p))]}
                 icon={createColoredIcon(statusColors[p.status] || statusColors.disponibil)}
               >
                 <Popup>
                   <div style={{ fontFamily: "var(--font-sans)", minWidth: 180 }}>
                     <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)", marginBottom: 4 }}>
-                      {p.titlu || p.adresa || "Proprietate"}
+                      {p.titlu || formatAdresa(p.adresa) || "Proprietate"}
                     </div>
                     <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 4 }}>
                       {p.tip} {p.categorie || ""} {p.suprafata ? `· ${p.suprafata}m²` : ""}
                     </div>
                     {p.pret && (
                       <div style={{ fontSize: 14, fontWeight: 700, color: "var(--primary)", marginBottom: 4 }}>
-                        {Number(p.pret).toLocaleString("ro-RO")} €
+                        {p.pret}
                       </div>
                     )}
                     <div style={{ display: "inline-block", fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 6,
@@ -192,9 +203,9 @@ export default function Harta() {
                       color: statusColors[p.status] || "var(--text-secondary)" }}>
                       {statusLabels[p.status] || p.status || "—"}
                     </div>
-                    {p.adresa && <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 4 }}>{p.adresa}</div>}
+                    {p.adresa && <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 4 }}>{formatAdresa(p.adresa)}</div>}
                     <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 2 }}>
-                      {Number(p.lat).toFixed(6)}, {Number(p.lng).toFixed(6)}
+                      {Number(getLat(p)).toFixed(6)}, {Number(getLng(p)).toFixed(6)}
                     </div>
                   </div>
                 </Popup>
@@ -212,7 +223,7 @@ export default function Harta() {
               <div style={{ padding: 30, textAlign: "center", color: "var(--text-tertiary)", fontSize: 13 }}>Nicio proprietate găsită.</div>
             ) : (
               filtrate.map((p) => {
-                const areCoordonate = p.lat && p.lng;
+                const areCoordonate = getLat(p) && getLng(p);
                 const isSelected = String(selectedId) === String(p.id);
                 return (
                   <div key={p.id}
@@ -225,13 +236,13 @@ export default function Harta() {
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                       <div style={{ minWidth: 0, flex: 1 }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {p.titlu || p.adresa || `Proprietate #${p.id}`}
+                          {p.titlu || formatAdresa(p.adresa) || `Proprietate #${p.id}`}
                         </div>
                         <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 2 }}>
                           {p.tip || "—"} {p.categorie ? `· ${p.categorie}` : ""} {p.suprafata ? `· ${p.suprafata}m²` : ""}
                         </div>
-                        {p.pret && <div style={{ fontSize: 12, fontWeight: 700, color: "var(--primary)", marginTop: 3 }}>{Number(p.pret).toLocaleString("ro-RO")} €</div>}
-                        {p.adresa && <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.adresa}</div>}
+                        {p.pret && <div style={{ fontSize: 12, fontWeight: 700, color: "var(--primary)", marginTop: 3 }}>{p.pret}</div>}
+                        {p.adresa && <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{formatAdresa(p.adresa)}</div>}
                       </div>
                       <span style={{
                         flexShrink: 0, fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 6,
@@ -244,7 +255,7 @@ export default function Harta() {
                     {areCoordonate && (
                       <div style={{ marginTop: 6, display: "flex", gap: 6 }}>
                         <span style={{ fontSize: 10, color: "var(--text-tertiary)", background: "var(--bg-secondary)", padding: "2px 8px", borderRadius: 4 }}>
-                          {Number(p.lat).toFixed(4)}, {Number(p.lng).toFixed(4)}
+                          {Number(getLat(p)).toFixed(4)}, {Number(getLng(p)).toFixed(4)}
                         </span>
                         {isSelected && (
                           <button onClick={(e) => { e.stopPropagation(); stergeCoordonate(p.id); }}
@@ -265,7 +276,7 @@ export default function Harta() {
             )}
           </div>
           <div style={{ padding: "10px 14px", borderTop: "0.5px solid var(--border-tertiary)", fontSize: 11, color: "var(--text-tertiary)" }}>
-            {filtrate.length} proprietăți · {filtrate.filter((p) => p.lat && p.lng).length} pe hartă
+            {filtrate.length} proprietăți · {filtrate.filter((p) => getLat(p) && getLng(p)).length} pe hartă
           </div>
         </div>
       </div>

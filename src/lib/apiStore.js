@@ -42,7 +42,9 @@ async function apiFetch(resource, method, body, id, retry = true) {
           if (retryRes.ok) return retryRes.json();
         }
       }
-      throw new Error(`Eroare ${res.status}`);
+      let errorBody = "";
+      try { errorBody = await res.text(); } catch {}
+      throw new Error(`Eroare ${res.status}: ${errorBody}`);
     }
     return res.json();
   } catch (e) {
@@ -92,10 +94,21 @@ export function createSyncedStore(key, initial = []) {
 
     add(item) {
       const all = readLocal();
-      const newItem = { ...item, id: Date.now() };
+      const tempId = Date.now();
+      const newItem = { ...item, id: tempId };
       all.push(newItem);
       writeLocal(all);
-      pushToApi("POST", null, newItem).then(() => syncFromApi());
+      pushToApi("POST", null, newItem).then((saved) => {
+        if (saved) {
+          const fresh = readLocal();
+          const idx = fresh.findIndex((x) => String(x.id) === String(tempId));
+          if (idx > -1) {
+            fresh[idx] = { ...saved };
+            writeLocal(fresh);
+            window.dispatchEvent(new CustomEvent(`store:${key}`));
+          }
+        }
+      }).catch(() => {});
       return newItem;
     },
 
