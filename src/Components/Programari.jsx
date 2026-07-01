@@ -214,7 +214,7 @@ export default function Programari() {
 
   const checkGoogleStatus = async () => {
     try {
-      const res = await fetch("/api/google-calendar?action=status");
+      const res = await fetch("/api/organizations?action=google-status");
       if (res.ok) {
         const data = await res.json();
         setGoogleConnected(data.connected);
@@ -226,7 +226,7 @@ export default function Programari() {
   const syncToGoogle = async (programare) => {
     if (!googleConnected) return;
     try {
-      await fetch("/api/google-calendar?action=sync", {
+      await fetch("/api/organizations?action=google-sync", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ programare }),
@@ -237,7 +237,7 @@ export default function Programari() {
   const deleteFromGoogle = async (googleEventId, programareId) => {
     if (!googleConnected) return;
     try {
-      await fetch("/api/google-calendar?action=delete-event", {
+      await fetch("/api/organizations?action=google-delete-event", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ googleEventId, programareId }),
@@ -259,7 +259,7 @@ export default function Programari() {
 
   const disconnectGoogle = async () => {
     if (!confirm("Deconectezi Google Calendar? Programările nu vor mai fi sincronizate.")) return;
-    await fetch("/api/google-calendar", { method: "DELETE" });
+    await fetch("/api/organizations?action=google-disconnect", { method: "DELETE" });
     setGoogleConnected(false);
     setGoogleEmail(null);
   };
@@ -274,7 +274,7 @@ export default function Programari() {
     if (code) {
       setSyncLoading(true);
       const redirectUri = window.location.origin + "/admin/programari";
-      fetch("/api/google-calendar", {
+      fetch("/api/organizations?action=google-connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code, redirectUri }),
