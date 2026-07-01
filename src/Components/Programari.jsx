@@ -199,7 +199,7 @@ function CalendarView({ programari, schimbaStatus, stergeProgramare }) {
 
 export default function Programari() {
   const m = useIsMobile();
-  const { getToken } = useAuth();
+  const { getToken, isLoaded } = useAuth();
   const [programari, setProgramari] = useState([]);
   const [clienti, setClienti] = useState([]);
   const [search, setSearch] = useState("");
@@ -274,8 +274,11 @@ export default function Programari() {
   useEffect(() => {
     setProgramari(programariStore.getAll());
     setClienti(clientiStore.getAll());
-    checkGoogleStatus();
+  }, []);
 
+  useEffect(() => {
+    if (!isLoaded) return;
+    checkGoogleStatus();
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
     if (code) {
@@ -295,7 +298,7 @@ export default function Programari() {
         window.history.replaceState({}, "", "/admin/programari");
       });
     }
-  }, []);
+  }, [isLoaded]);
 
   const refresh = () => {
     setProgramari(programariStore.getAll());
