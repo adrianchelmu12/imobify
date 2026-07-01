@@ -75,6 +75,26 @@ function CustomTooltip({ active, payload, label }) {
   return null;
 }
 
+const MetricPair = ({ label, total, sub, subLabel, color }) => (
+  <div style={{
+    background: "var(--bg-secondary)",
+    borderRadius: 12,
+    padding: "16px 14px",
+    display: "flex",
+    flexDirection: "column",
+    gap: 6,
+    borderLeft: `3px solid ${color}`,
+  }}>
+    <div style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 500, textTransform: "uppercase", letterSpacing: 0.5 }}>{label}</div>
+    <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+      <span style={{ fontSize: 26, fontWeight: 800, color: "var(--text-primary)", lineHeight: 1 }}>{total}</span>
+      <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+        <span style={{ fontWeight: 700, color }}>{sub}</span> {subLabel}
+      </span>
+    </div>
+  </div>
+);
+
 export default function Rapoarte() {
   const m = useIsMobile();
   const [date, setDate] = useState(null);
@@ -146,29 +166,9 @@ export default function Rapoarte() {
     { name: "Închiriate", value: propInchiriate },
   ].filter(d => d.value > 0);
 
-  const performantaData = [
-    { name: "Programări", Programări: date.programari.length, Azi: programariAzi },
-    { name: "Task-uri", Taskuri: date.taskuri.length, Rezolvate: taskuriDone },
-    { name: "Clienți", Clienți: date.clienti.length, Activi: clientiActivi },
-    { name: "Proprietăți", Proprietăți: date.proprietati.length, Disponibile: propDisponibile },
-  ];
-
   const comisioaneData = [
     { name: "Comisioane", Total: comisioaneTotale, Plătite: comisioanePlatite },
   ];
-
-  function CustomPerfLegend({ payload }) {
-    return (
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 18px", paddingTop: 14, justifyContent: "center" }}>
-        {(payload || []).map((entry, index) => (
-          <div key={index} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--text-secondary)", whiteSpace: "nowrap", lineHeight: "20px" }}>
-            <span style={{ width: 7, height: 7, borderRadius: "50%", background: entry.color, flexShrink: 0, display: "inline-block" }} />
-            {entry.value}
-          </div>
-        ))}
-      </div>
-    );
-  }
 
   return (
     <div style={{ padding: m ? "18px 14px 28px" : "32px" }}>
@@ -248,34 +248,13 @@ export default function Rapoarte() {
       <div style={{ display: "grid", gridTemplateColumns: m ? "1fr" : "1fr 1fr", gap: 16, marginBottom: 16 }}>
         <div style={{ ...card, padding: 24 }}>
           <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)", marginBottom: 4 }}>Performanță generală</div>
-          <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 20 }}>Comparație indicatori principali</div>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={performantaData} barSize={28} barGap={12}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.04)" vertical={false} />
-              <XAxis dataKey="name" tick={{ fontSize: 12, fill: "var(--text-secondary)", fontWeight: 500 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: "var(--text-tertiary)" }} axisLine={false} tickLine={false} />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(99,102,241,0.04)" }} />
-              <Legend content={<CustomPerfLegend />} />
-              <Bar dataKey="Programări" fill="url(#gradPerf1)" radius={[8, 8, 0, 0]} />
-              <Bar dataKey="Azi" fill="url(#gradPerf2)" radius={[8, 8, 0, 0]} />
-              <Bar dataKey="Taskuri" fill="url(#gradPerf3)" radius={[8, 8, 0, 0]} />
-              <Bar dataKey="Rezolvate" fill="url(#gradPerf4)" radius={[8, 8, 0, 0]} />
-              <Bar dataKey="Clienți" fill="url(#gradPerf5)" radius={[8, 8, 0, 0]} />
-              <Bar dataKey="Activi" fill="url(#gradPerf6)" radius={[8, 8, 0, 0]} />
-              <Bar dataKey="Proprietăți" fill="url(#gradPerf7)" radius={[8, 8, 0, 0]} />
-              <Bar dataKey="Disponibile" fill="url(#gradPerf8)" radius={[8, 8, 0, 0]} />
-              <defs>
-                <linearGradient id="gradPerf1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#6366f1" /><stop offset="100%" stopColor="#8b5cf6" /></linearGradient>
-                <linearGradient id="gradPerf2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#06b6d4" /><stop offset="100%" stopColor="#22d3ee" /></linearGradient>
-                <linearGradient id="gradPerf3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#10b981" /><stop offset="100%" stopColor="#34d399" /></linearGradient>
-                <linearGradient id="gradPerf4" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#f59e0b" /><stop offset="100%" stopColor="#fbbf24" /></linearGradient>
-                <linearGradient id="gradPerf5" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#6366f1" /><stop offset="100%" stopColor="#8b5cf6" /></linearGradient>
-                <linearGradient id="gradPerf6" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#06b6d4" /><stop offset="100%" stopColor="#22d3ee" /></linearGradient>
-                <linearGradient id="gradPerf7" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#10b981" /><stop offset="100%" stopColor="#34d399" /></linearGradient>
-                <linearGradient id="gradPerf8" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#f59e0b" /><stop offset="100%" stopColor="#fbbf24" /></linearGradient>
-              </defs>
-            </BarChart>
-          </ResponsiveContainer>
+          <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 20 }}>Indicatori principali pe categorii</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <MetricPair label="Programări" total={date.programari.length} sub={programariAzi} subLabel="azi" color="#6366f1" />
+            <MetricPair label="Task-uri" total={date.taskuri.length} sub={taskuriDone} subLabel="rezolvate" color="#10b981" />
+            <MetricPair label="Clienți" total={date.clienti.length} sub={clientiActivi} subLabel="activi" color="#06b6d4" />
+            <MetricPair label="Proprietăți" total={date.proprietati.length} sub={propDisponibile} subLabel="disponibile" color="#f59e0b" />
+          </div>
         </div>
 
         <div style={{ ...card, padding: 24 }}>
