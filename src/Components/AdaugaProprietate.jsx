@@ -19,8 +19,8 @@ const FORM_INITIAL = {
   badge_comision_zero: false,
   descriere: "",
   adresa: {
-    judet: "Iași",
-    oras: "Iași",
+    judet: "",
+    oras: "",
     orasCustom: "",
     cartier: "",
     cartierCustom: "",
@@ -2272,8 +2272,8 @@ export default function AdaugaProprietate() {
       badge_comision_zero: Boolean(data.badge_comision_zero),
       descriere: data.descriere || "",
       adresa: {
-        judet: data.judet || "Iași",
-        oras: orasInit || "Iași",
+        judet: data.judet || "",
+        oras: orasInit || "",
         cartier: cartierInit,
         strada: data.strada || "",
         numar: data.numar || "",

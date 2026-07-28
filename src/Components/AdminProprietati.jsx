@@ -137,8 +137,8 @@ function EditForm({ proprietate, onSave, onCancel }) {
   const getAdresa = () => {
     const a = typeof proprietate.adresa === "object" && proprietate.adresa ? proprietate.adresa : {};
     return {
-      judet: a.judet || proprietate.judet || "Iași",
-      oras: a.oras || a.localitate || proprietate.oras || "Iași",
+      judet: a.judet || proprietate.judet || "",
+      oras: a.oras || a.localitate || proprietate.oras || "",
       cartier: a.cartier || "",
       strada: a.strada || proprietate.strada || "",
       numar: a.numar || proprietate.numar || "",
