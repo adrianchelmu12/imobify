@@ -3,6 +3,7 @@ import { getDb, getSql, setOrgContext } from "./_db.js";
 import { organizations, agenti, googleTokens } from "../src/db/schema.js";
 import { requireAuth } from "./_auth.js";
 import { parseBody, sendError } from "./_utils.js";
+import { encrypt, decrypt } from "./_crypto.js";
 
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_CALENDAR_API = "https://www.googleapis.com/calendar/v3";
@@ -19,16 +20,24 @@ function generateShortId() {
 async function getGoogleToken(userId) {
   try {
     const rows = await getDb().select().from(googleTokens).where(eq(googleTokens.userId, userId));
-    return rows[0] || null;
+    const row = rows[0];
+    if (!row) return null;
+    return {
+      ...row,
+      accessToken: decrypt(row.accessToken),
+      refreshToken: decrypt(row.refreshToken),
+    };
   } catch { return null; }
 }
 
 async function storeGoogleToken(userId, orgId, tokenData, email) {
   const existing = await getGoogleToken(userId);
+  const encAccess = encrypt(tokenData.access_token);
+  const encRefresh = encrypt(tokenData.refresh_token || existing?.refreshToken);
   if (existing) {
     await getDb().update(googleTokens).set({
-      accessToken: tokenData.access_token,
-      refreshToken: tokenData.refresh_token || existing.refreshToken,
+      accessToken: encAccess,
+      refreshToken: encRefresh,
       expiryDate: tokenData.expiry_date ? Date.now() + tokenData.expires_in * 1000 : null,
       email: email || existing.email,
       connected: true,
@@ -37,8 +46,8 @@ async function storeGoogleToken(userId, orgId, tokenData, email) {
   } else {
     await getDb().insert(googleTokens).values({
       userId, orgId,
-      accessToken: tokenData.access_token,
-      refreshToken: tokenData.refresh_token || null,
+      accessToken: encAccess,
+      refreshToken: encRefresh,
       expiryDate: tokenData.expiry_date ? Date.now() + tokenData.expires_in * 1000 : null,
       email: email || null,
       connected: true,

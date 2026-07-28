@@ -44,9 +44,8 @@ export default async function handler(req, res) {
         .returning();
       const row = result?.[0] || result;
 
-      if (body.email) {
+        if (body.email) {
         try {
-          console.log("Sending invite to:", body.email, "org:", orgId, "by:", userId);
           const clerk = getClerk();
           const inv = await clerk.organizations.createOrganizationInvitation({
             organizationId: orgId,
@@ -54,9 +53,10 @@ export default async function handler(req, res) {
             emailAddress: body.email,
             role: "org:admin",
           });
-          console.log("Invite sent:", inv.id);
         } catch (e) {
-          console.error("Invite error:", e?.message, e?.stack);
+          if (process.env.NODE_ENV === "development") {
+            console.error("Invite error:", e?.message);
+          }
         }
       }
 

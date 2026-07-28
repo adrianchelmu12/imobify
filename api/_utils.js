@@ -70,20 +70,37 @@ export function sendError(res, err) {
   if (res.headersSent) return;
   const statusCode = err.statusCode || 500;
   const message = statusCode === 500 ? "Internal server error" : err.message;
-  if (statusCode === 500) {
-    console.error(err);
+  if (statusCode === 500 && process.env.NODE_ENV === "development") {
+    console.error("API Error:", err.message);
   }
   res.status(statusCode).json({ error: message });
 }
 
-export function createCrudHandler(table, opts = {}) {
-  const { onCreate, onUpdate } = opts;
+export function createCrudHandler(table, options = {}) {
+  const { allowedFields, adminOnly = false } = options;
+
   return async function handler(req, res) {
     const auth = await requireAuth(req, res);
     if (!auth) return;
-    const { userId, orgId, orgShortId, userName } = auth;
+    const { userId, orgId, orgShortId, userName, role } = auth;
     await setOrgContext(orgId, userId);
     const id = getSearchParam(req, "id");
+
+    if (adminOnly && role !== "admin") {
+      return res.status(403).json({ error: "Doar adminii pot efectua această operațiune" });
+    }
+
+    function sanitize(body) {
+      if (!allowedFields) {
+        const { id: _id, orgId: _o, userId: _u, createdAt: _c, createdByName: _n, ...rest } = body;
+        return rest;
+      }
+      const clean = {};
+      for (const key of allowedFields) {
+        if (key in body) clean[key] = body[key];
+      }
+      return clean;
+    }
 
     try {
       if (req.method === "GET") {
@@ -103,11 +120,11 @@ export function createCrudHandler(table, opts = {}) {
 
       if (req.method === "POST") {
         const body = await parseBody(req);
+        const clean = sanitize(body);
         const [row] = await getDb()
           .insert(table)
-          .values({ ...body, userId, orgId, orgShortId, createdByName: userName })
+          .values({ ...clean, userId, orgId, orgShortId, createdByName: userName })
           .returning();
-        if (onCreate) onCreate(row, orgId, userName);
         return res.status(201).json(row);
       }
 
@@ -115,12 +132,12 @@ export function createCrudHandler(table, opts = {}) {
         const body = await parseBody(req);
         const { id: rowId, ...data } = body;
         if (!rowId) return res.status(400).json({ error: "ID lipsă" });
+        const clean = sanitize(data);
         const [row] = await getDb()
           .update(table)
-          .set({ ...data, updatedByName: userName })
+          .set({ ...clean, updatedByName: userName })
           .where(and(eq(table.orgId, orgId), eq(table.id, parseInt(rowId))))
           .returning();
-        if (onUpdate) onUpdate({ ...data, id: rowId }, orgId, userName);
         return res.json(row);
       }
 

@@ -64,7 +64,9 @@ export async function requireAuth(req, res) {
     ]);
     return { userId, orgId, orgShortId, role: userInfo.role, userName: userInfo.name };
   } catch (err) {
-    console.error("Clerk verifyToken:", err.message);
+    if (process.env.NODE_ENV === "development") {
+      console.error("Clerk verifyToken:", err.message);
+    }
     return respond(res, 401, "Token invalid");
   }
 }
