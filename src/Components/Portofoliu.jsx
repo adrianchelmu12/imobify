@@ -15,16 +15,6 @@ import {
 const TIPURI = ["Toate", "Apartament", "Garsonieră", "Casă", "Terenuri", "Spațiu comercial", "Spațiu industrial", "Birouri"];
 const TRANZACTII = ["Toate", "Vânzare", "Închiriere"];
 
-const ZONE_CUNOSCUTE = [
-  "Alexandru cel Bun", "Aroneanu", "Baza 3", "Bucium", "Bârnova", "Bularga", "Breazu",
-  "Canta", "Cârlig", "Centru", "Centru Civic", "Ciurea", "Copou", "Cug", "Dacia", "Dancu",
-  "Frumoasa", "Galata", "Gara", "Horpaz", "Holboca", "Lunca Cetățuii", "Lețcani",
-  "Metalurgie", "Mircea cel Bătrân", "Miroslava", "Nicolina", "Oancea", "Păcurari",
-  "Popas Păcurari", "Podu Roș", "Podul de Fier", "Poitiers", "Păun", "Rediu",
-  "Șorogari", "Tătărași", "Tomești", "Tudor Vladimirescu", "Uricani", "Valea Adâncă",
-  "Valea Lupului", "Valea Ursului", "Vorovești", "Vișani", "Sărărie",
-];
-
 const SORT = [
   { value: "default", label: "Implicite" },
   { value: "pret-asc", label: "Preț crescător" },
@@ -60,8 +50,7 @@ export default function Portofoliu() {
 
   const zone = useMemo(() => {
     const dinDate = new Set(proprietati.map((p) => p.zona || p.oras).filter(Boolean));
-    const toate = new Set([...ZONE_CUNOSCUTE, ...dinDate]);
-    return ["Toate", ...Array.from(toate).sort()];
+    return ["Toate", ...Array.from(dinDate).sort()];
   }, [proprietati]);
 
   useEffect(() => {
