@@ -9,7 +9,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
-const IASI_CENTER = [47.1585, 27.6014];
+const DEFAULT_CENTER = [45.9432, 24.9668];
 
 function MapClickHandler({ onClick }) {
   useMapEvents({ click(e) { onClick(e.latlng); } });
@@ -80,7 +80,7 @@ export default function MapPicker({ lat, lng, address, onChange, height = 280 })
   return (
     <div style={{ borderRadius: 10, overflow: "hidden", height, border: "1px solid var(--border-tertiary)" }}>
       <MapContainer
-        center={position || IASI_CENTER}
+        center={position || DEFAULT_CENTER}
         zoom={position ? 16 : 13}
         style={{ height: "100%", width: "100%" }}
         scrollWheelZoom={false}

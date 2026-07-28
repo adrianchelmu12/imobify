@@ -11,7 +11,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
 });
 
-const IASI_CENTER = [47.1585, 27.6014];
+const ROMANIA_CENTER = [45.9432, 24.9668];
 
 const statusColors = {
   disponibil: "#10b981",
@@ -95,9 +95,13 @@ export default function Harta() {
     return matchSearch && matchStatus;
   });
 
-  const center = filtrateCuCoordonate.length > 0
-    ? [Number(getLat(filtrateCuCoordonate[0])), Number(getLng(filtrateCuCoordonate[0]))]
-    : IASI_CENTER;
+  const center = (() => {
+    const props = cuCoordonate;
+    if (props.length === 0) return ROMANIA_CENTER;
+    const avgLat = props.reduce((s, p) => s + Number(getLat(p)), 0) / props.length;
+    const avgLng = props.reduce((s, p) => s + Number(getLng(p)), 0) / props.length;
+    return [avgLat, avgLng];
+  })();
 
   const selectedProp = selectedId ? proprietati.find((p) => String(p.id) === String(selectedId)) : null;
 
@@ -118,7 +122,7 @@ export default function Harta() {
       setPinMode(false);
     } else {
       setPinMode(true);
-      setFlyTo(IASI_CENTER);
+      setFlyTo(center);
     }
   };
 
