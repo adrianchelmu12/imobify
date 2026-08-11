@@ -138,6 +138,8 @@ export const documente = pgTable("documente", {
   tip: text("tip").default("Contract"),
   client: text("client"),
   proprietate: text("proprietate"),
+  proprietateId: bigint("proprietate_id", { mode: "number" }),
+  clientId: bigint("client_id", { mode: "number" }),
   data: text("data"),
   fisier: text("fisier"),
   createdByName: text("created_by_name"),
