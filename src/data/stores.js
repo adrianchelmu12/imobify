@@ -7,7 +7,6 @@ export const taskuriStore = createSyncedStore("taskuri", []);
 export const proiecteStore = createSyncedStore("proiecte", []);
 export const documenteStore = createSyncedStore("documente", []);
 export const comisioaneStore = createSyncedStore("comisioane", []);
-export const campaniiStore = createSyncedStore("campanii", []);
 export const notificariStore = createSyncedStore("notificari", []);
 
 const allStores = [
@@ -18,7 +17,6 @@ const allStores = [
   proiecteStore,
   documenteStore,
   comisioaneStore,
-  campaniiStore,
   notificariStore,
 ];
 

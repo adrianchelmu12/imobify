@@ -164,21 +164,6 @@ export const comisioane = pgTable("comisioane", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const campanii = pgTable("campanii", {
-  id: bigint("id", { mode: "number" }).primaryKey(),
-  orgId: text("org_id").notNull(),
-  orgShortId: text("org_short_id"),
-  userId: text("user_id").notNull(),
-  nume: text("nume").notNull(),
-  tip: text("tip").default("Email"),
-  dataStart: text("data_start"),
-  dataEnd: text("data_end"),
-  buget: text("buget"),
-  createdByName: text("created_by_name"),
-  updatedByName: text("updated_by_name"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
 export const notificari = pgTable("notificari", {
   id: bigint("id", { mode: "number" }).primaryKey(),
   orgId: text("org_id").notNull(),

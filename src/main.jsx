@@ -21,7 +21,6 @@ import App from "./App";
   filtreaza("imob-taskuri-v2", Array.from({ length: 15 }, (_, i) => 4000 + i));
   filtreaza("imob-proiecte-v2", Array.from({ length: 6 }, (_, i) => 5000 + i));
   filtreaza("imob-comisioane-v2", Array.from({ length: 14 }, (_, i) => 6000 + i));
-  filtreaza("imob-campanii-v2", Array.from({ length: 8 }, (_, i) => 7000 + i));
   filtreaza("imob-agenti-v2", [1, 2, 3, 4]);
   filtreaza("imob-documente-v2", [8001, 8002, 8003]);
 

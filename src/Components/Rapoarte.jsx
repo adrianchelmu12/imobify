@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { proprietatiStore, clientiStore, programariStore, taskuriStore, comisioaneStore, campaniiStore } from "../data/stores";
+import { proprietatiStore, clientiStore, programariStore, taskuriStore, comisioaneStore } from "../data/stores";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, AreaChart, Area, LineChart, Line,
@@ -9,7 +9,6 @@ import {
   HiOutlineHomeModern,
   HiOutlineUserGroup,
   HiOutlineBanknotes,
-  HiOutlineMegaphone,
   HiOutlineArrowTrendingUp,
 } from "react-icons/hi2";
 
@@ -106,7 +105,6 @@ export default function Rapoarte() {
       programari: programariStore.getAll(),
       taskuri: taskuriStore.getAll(),
       comisioane: comisioaneStore.getAll(),
-      campanii: campaniiStore.getAll(),
     });
   }, []);
 
@@ -142,9 +140,6 @@ export default function Rapoarte() {
   const taskuriDone = date.taskuri.filter((t) => t.status === "done").length;
   const comisioaneTotale = date.comisioane.reduce((s, c) => s + (Number(c.suma) || 0), 0);
   const comisioanePlatite = date.comisioane.filter((c) => c.status === "Plătit").reduce((s, c) => s + (Number(c.suma) || 0), 0);
-  const campaniiActive = date.campanii.filter((c) => c.status === "Activă").length;
-  const leaduriDinCampanii = date.campanii.reduce((s, c) => s + (Number(c.leaduriGenerate) || 0), 0);
-  const bugetCampanii = date.campanii.reduce((s, c) => s + (Number(c.buget) || 0), 0);
 
   const surseClienti = {};
   date.clienti.forEach((c) => { if (c.sursa) { surseClienti[c.sursa] = (surseClienti[c.sursa] || 0) + 1; } });
@@ -189,15 +184,13 @@ export default function Rapoarte() {
         </div>
       </header>
 
-      <section style={{ display: "grid", gridTemplateColumns: m ? "1fr 1fr" : "repeat(4, 1fr)", gap: 14, marginBottom: 24 }}>
+      <section style={{ display: "grid", gridTemplateColumns: m ? "1fr 1fr" : "repeat(3, 1fr)", gap: 14, marginBottom: 24 }}>
         <StatCard label="Proprietăți disponibile" value={propDisponibile} hint={`din ${date.proprietati.length} totale`}
           icon={HiOutlineHomeModern} color="#6366f1" gradient="linear-gradient(135deg, #6366f1, #8b5cf6)" />
         <StatCard label="Clienți activi" value={clientiActivi} hint={`${clientiInchisi} închiși`}
           icon={HiOutlineUserGroup} color="#f59e0b" gradient="linear-gradient(135deg, #f59e0b, #fbbf24)" />
         <StatCard label="Comisioane" value={`${comisioaneTotale.toLocaleString("ro-RO")} €`} hint={`${comisioanePlatite.toLocaleString("ro-RO")} € plătite`}
           icon={HiOutlineBanknotes} color="#10b981" gradient="linear-gradient(135deg, #10b981, #34d399)" />
-        <StatCard label="Campanii active" value={campaniiActive} hint={`${leaduriDinCampanii} lead-uri generate`}
-          icon={HiOutlineMegaphone} color="#06b6d4" gradient="linear-gradient(135deg, #06b6d4, #22d3ee)" />
       </section>
 
       <div style={{ display: "grid", gridTemplateColumns: m ? "1fr" : "1fr 1fr", gap: 16, marginBottom: 16 }}>
@@ -284,7 +277,7 @@ export default function Rapoarte() {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: m ? "1fr" : "1fr 1fr", gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}>
         <div style={{ ...card, padding: 24 }}>
           <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)", marginBottom: 4 }}>Indicatori cheie</div>
           <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 20 }}>Rezumat metrici esențiale</div>
@@ -308,28 +301,6 @@ export default function Rapoarte() {
                 <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 6 }}>{item.label}</div>
               </div>
             ))}
-          </div>
-        </div>
-
-        <div style={{ ...card, padding: 24 }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)", marginBottom: 4 }}>Marketing & Campanii</div>
-          <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 20 }}>Performanță campanii și lead-uri</div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 20 }}>
-            <div style={{ textAlign: "center", padding: "16px", borderRadius: 16, background: "var(--bg-secondary)", border: "1px solid var(--border-tertiary)" }}>
-              <div style={{ fontSize: 26, fontWeight: 700, color: "var(--primary)" }}>{date.campanii.length}</div>
-              <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 4 }}>Campanii</div>
-            </div>
-            <div style={{ textAlign: "center", padding: "16px", borderRadius: 16, background: "var(--bg-secondary)", border: "1px solid var(--border-tertiary)" }}>
-              <div style={{ fontSize: 26, fontWeight: 700, color: "var(--success)" }}>{campaniiActive}</div>
-              <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 4 }}>Active</div>
-            </div>
-          </div>
-          <div style={{ padding: "18px", borderRadius: 16, background: "linear-gradient(135deg, rgba(99,102,241,0.05), rgba(139,92,246,0.05))", border: "1px solid rgba(99,102,241,0.1)" }}>
-            <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8, fontWeight: 500 }}>Lead-uri generate din campanii</div>
-            <div style={{ fontSize: 32, fontWeight: 800, color: "var(--primary)", lineHeight: 1 }}>{leaduriDinCampanii}</div>
-            <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 6 }}>
-              Buget total investit: {bugetCampanii.toLocaleString("ro-RO")} €
-            </div>
           </div>
         </div>
       </div>

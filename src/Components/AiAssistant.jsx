@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
-import { proprietatiStore, clientiStore, programariStore, taskuriStore, comisioaneStore, campaniiStore } from "../data/stores";
+import { proprietatiStore, clientiStore, programariStore, taskuriStore, comisioaneStore } from "../data/stores";
 
 const card = { background: "rgba(255,255,255,0.8)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.6)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-card)" };
 const input = { width: "100%", padding: "12px 16px", borderRadius: 12, border: "1px solid var(--border-secondary)", background: "var(--bg-primary)", color: "var(--text-primary)", outline: "none", fontSize: 13, boxSizing: "border-box" };
@@ -20,7 +20,6 @@ function buildSystemPrompt(date) {
   const pr = date.programari;
   const t = date.taskuri;
   const co = date.comisioane;
-  const ca = date.campanii;
 
   const disp = p.filter(x => (x.status === "disponibil" || x.status === "activ")).length;
   const vandute = p.filter(x => x.status === "vandut").length;
@@ -48,9 +47,6 @@ function buildSystemPrompt(date) {
 
   const comPlatite = co.filter(x => x.status === "Plătit").reduce((s, x) => s + (Number(x.suma) || 0), 0);
   const comAsteptare = co.filter(x => x.status === "În așteptare").reduce((s, x) => s + (Number(x.suma) || 0), 0);
-
-  const campActive = ca.filter(x => x.status === "Activă").length;
-  const leaduri = ca.reduce((s, x) => s + (Number(x.leaduriGenerate) || 0), 0);
 
   const propDisp = p.filter(x => (x.status === "disponibil" || x.status === "activ")).slice(0, 10);
   const propDetails = propDisp.map(x =>
@@ -101,11 +97,6 @@ COMISIOANE (${co.length} total):
 - Plătite: ${comPlatite.toLocaleString("ro-RO")} €
 - În așteptare: ${comAsteptare.toLocaleString("ro-RO")} €
 
-CAMPANII MARKETING (${ca.length} total):
-- Active: ${campActive}
-- Lead-uri generate: ${leaduri}
-- Buget total: ${ca.reduce((s, x) => s + (Number(x.buget) || 0), 0).toLocaleString("ro-RO")} €
-
 Răspunzi la întrebările utilizatorului analizând aceste date. Oferi recomandări practice, specifice și acționabile. Poți folosi emoji unde e relevant, dar fără bold markdown — scrie text simplu și curat.
 
 PROPRIETĂȚI DETALIATE (primele ${propDisp.length} disponibile):
@@ -140,7 +131,6 @@ export default function AiAssistant() {
     programari: programariStore.getAll(),
     taskuri: taskuriStore.getAll(),
     comisioane: comisioaneStore.getAll(),
-    campanii: campaniiStore.getAll(),
   });
 
   const [date, setDate] = useState(loadDate);
@@ -148,7 +138,7 @@ export default function AiAssistant() {
   useEffect(() => { setDate(loadDate()); }, []);
 
   useEffect(() => {
-    const intro = `Bună! Sunt asistentul tău AI Imobify. Am acces la toate datele agenției tale și pot să îți ofer analize inteligente, recomandări personalizate și răspunsuri precise.\n\nPoți să mă întrebi orice despre:\n🏠 Proprietăți · 👥 Clienți · 📅 Programări · ✅ Task-uri · 💰 Comisioane · 📢 Campanii\n\nScrie o întrebare sau alege o sugestie mai jos ↓`;
+    const intro = `Bună! Sunt asistentul tău AI Imobify. Am acces la toate datele agenției tale și pot să îți ofer analize inteligente, recomandări personalizate și răspunsuri precise.\n\nPoți să mă întrebi orice despre:\n🏠 Proprietăți · 👥 Clienți · 📅 Programări · ✅ Task-uri · 💰 Comisioane\n\nScrie o întrebare sau alege o sugestie mai jos ↓`;
     setMesaje([{ rol: "asistent", text: intro }]);
   }, []);
 

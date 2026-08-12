@@ -20,7 +20,6 @@ import {
   HiOutlineBarsArrowDown,
   HiOutlineDocumentDuplicate,
   HiOutlineBanknotes,
-  HiOutlineMegaphone,
   HiOutlineSparkles,
   HiOutlinePresentationChartBar,
   HiOutlineChevronDown,
@@ -53,12 +52,6 @@ const NAV_SECTIONS = [
     items: [
       { label: "Documente", icon: HiOutlineDocumentDuplicate, href: "/admin/documente" },
       { label: "Comisioane", icon: HiOutlineBanknotes, href: "/admin/comisioane" },
-    ],
-  },
-  {
-    label: "Marketing",
-    items: [
-      { label: "Campanii", icon: HiOutlineMegaphone, href: "/admin/campanii" },
     ],
   },
   {
@@ -148,7 +141,7 @@ function Sidebar({ mobileOpen, setMobileOpen, isMobile }) {
       <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "4px 8px" }} />
 
       {NAV_SECTIONS.filter(s => {
-        if (!roleManagerOrAdmin && (s.label === "Marketing" || s.label === "Analiză")) return false;
+        if (!roleManagerOrAdmin && s.label === "Analiză") return false;
         return true;
       }).map((section) => (
         <div key={section.label}>

@@ -15,7 +15,6 @@ import Pipeline from "./Components/Pipeline";
 import Programari from "./Components/Programari";
 import Documente from "./Components/Documente";
 import Comisioane from "./Components/Comisioane";
-import Campanii from "./Components/Campanii";
 import Taskuri from "./Components/Taskuri";
 import AiAssistant from "./Components/AiAssistant";
 import Rapoarte from "./Components/Rapoarte";
@@ -84,7 +83,6 @@ export default function App() {
           <Route path="programari" element={<Programari />} />
           <Route path="documente" element={<Documente />} />
           <Route path="comisioane" element={<Comisioane />} />
-          <Route path="campanii" element={<Campanii />} />
           <Route path="taskuri" element={<Taskuri />} />
           <Route path="ai-assistant" element={<AiAssistant />} />
           <Route path="rapoarte" element={<Rapoarte />} />
