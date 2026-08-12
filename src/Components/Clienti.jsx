@@ -11,6 +11,13 @@ const statusStyle = {
   Închis: { background: "var(--bg-secondary)", color: "var(--text-secondary)" },
 };
 
+const tranzactieStyle = {
+  "Vânzare": { background: "var(--primary-light)", color: "var(--primary)" },
+  "Închiriere": { background: "rgba(16,185,129,0.12)", color: "#059669" },
+};
+
+const TRANZACTII = ["Vânzare", "Închiriere"];
+
 const page = { padding: "22px 24px" };
 const card = { background: "rgba(255,255,255,0.8)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.6)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-card)" };
 
@@ -147,6 +154,7 @@ export default function Clienti() {
 
     return proprietati
       .filter(p => p.status !== "vandut" && p.status !== "inchiriat")
+      .filter(p => !client.tranzactie || !p.tranzactie || p.tranzactie === client.tranzactie)
       .map(p => {
         let score = 0;
         const pret = p.pretNumeric || 0;
@@ -212,7 +220,12 @@ export default function Clienti() {
             <input style={input} value={editForm.telefon || ""} onChange={(e) => setEditForm({ ...editForm, telefon: e.target.value })} />
             <input style={{ ...input, marginTop: 4 }} value={editForm.email || ""} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} placeholder="email" />
           </td>
-          <td style={{ padding: "10px 14px" }}><input style={input} value={editForm.interes || ""} onChange={(e) => setEditForm({ ...editForm, interes: e.target.value })} /></td>
+          <td style={{ padding: "10px 14px" }}>
+            <input style={input} value={editForm.interes || ""} onChange={(e) => setEditForm({ ...editForm, interes: e.target.value })} />
+            <select style={{ ...input, marginTop: 4 }} value={editForm.tranzactie || "Vânzare"} onChange={(e) => setEditForm({ ...editForm, tranzactie: e.target.value })}>
+              {TRANZACTII.map((t) => <option key={t}>{t}</option>)}
+            </select>
+          </td>
           <td style={{ padding: "10px 14px" }}><input style={input} value={editForm.buget || ""} onChange={(e) => setEditForm({ ...editForm, buget: e.target.value })} /></td>
           <td style={{ padding: "10px 14px" }}>
             <select style={input} value={editForm.sursa || ""} onChange={(e) => setEditForm({ ...editForm, sursa: e.target.value })}>
@@ -242,7 +255,11 @@ export default function Clienti() {
           </td>
           <td style={{ padding: "13px 14px" }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{client.nume}</div>
-          <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 3 }}>{client.zona || "—"}{client.sursa ? ` · ${client.sursa}` : ""}</div>
+          <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 3, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            <span style={{ ...(tranzactieStyle[client.tranzactie] || {}), fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20 }}>{client.tranzactie || "Vânzare"}</span>
+            {client.zona ? <span>{client.zona}</span> : null}
+            {client.sursa ? <span>· {client.sursa}</span> : null}
+          </div>
           <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 4 }}>
             Adăugat de {client.createdByName || "—"}
             {client.updatedByName && client.updatedByName !== client.createdByName ? ` · Modificat de ${client.updatedByName}` : ""}
@@ -273,20 +290,45 @@ export default function Clienti() {
 
   const ClientForm = () => {
     const [err, setErr] = useState("");
-    const [form, setForm] = useState({ nume: "", telefon: "", email: "", buget: "", interes: "", zona: "", status: "Nou", sursa: "" });
+    const [form, setForm] = useState({ nume: "", telefon: "", email: "", buget: "", interes: "", zona: "", tranzactie: "Vânzare", status: "Nou", sursa: "" });
     const upd = (k, v) => { setForm((p) => ({ ...p, [k]: v })); if (err) setErr(""); };
     const submit = (e) => {
       e.preventDefault();
       if (!form.nume.trim()) { setErr("Completează numele."); return; }
       if (!form.telefon.trim()) { setErr("Completează telefonul."); return; }
-      clientiStore.add({ ...form, email: form.email || "—", buget: form.buget || "—", interes: form.interes || "—", zona: form.zona || "—", ultimaInteractiune: "Acum" });
+      clientiStore.add({ ...form, email: form.email || "—", buget: form.buget || "—", interes: form.interes || "—", zona: form.zona || "—", tranzactie: form.tranzactie || "Vânzare", ultimaInteractiune: "Acum" });
       refresh();
-      setForm({ nume: "", telefon: "", email: "", buget: "", interes: "", zona: "", status: "Nou", sursa: "" });
+      setForm({ nume: "", telefon: "", email: "", buget: "", interes: "", zona: "", tranzactie: "Vânzare", status: "Nou", sursa: "" });
     };
     return (
       <form onSubmit={submit} style={{ ...card, padding: 18 }}>
         <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", marginBottom: 14 }}>Adaugă client nou</div>
         {err && <div style={{ marginBottom: 10, padding: "8px 10px", borderRadius: 8, background: "#FEE2E2", color: "#B91C1C", fontSize: 12 }}>{err}</div>}
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 500, color: "var(--text-secondary)", marginBottom: 6 }}>Tip tranzacție</div>
+          <div style={{ display: "flex", gap: 8 }}>
+            {TRANZACTII.map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => upd("tranzactie", t)}
+                style={{
+                  flex: 1,
+                  padding: "8px 12px",
+                  borderRadius: 8,
+                  border: form.tranzactie === t ? "none" : "0.5px solid var(--border-secondary)",
+                  background: form.tranzactie === t ? (t === "Vânzare" ? "var(--primary)" : "#10b981") : "var(--bg-primary)",
+                  color: form.tranzactie === t ? "white" : "var(--text-secondary)",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
         <div style={{ display: "grid", gridTemplateColumns: m ? "1fr" : "1fr 1fr", gap: 10 }}>
           <input style={input} placeholder="Nume client *" value={form.nume} onChange={(e) => upd("nume", e.target.value)} />
           <input style={input} placeholder="Telefon *" value={form.telefon} onChange={(e) => upd("telefon", e.target.value)} />
@@ -428,7 +470,11 @@ export default function Clienti() {
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 12 }}>
                       <div>
                         <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)" }}>{client.nume}</div>
-                        <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 3 }}>{client.zona || "—"}{client.sursa ? ` · ${client.sursa}` : ""}</div>
+                        <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 3, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                          <span style={{ ...(tranzactieStyle[client.tranzactie] || {}), fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20 }}>{client.tranzactie || "Vânzare"}</span>
+                          {client.zona ? <span>{client.zona}</span> : null}
+                          {client.sursa ? <span>· {client.sursa}</span> : null}
+                        </div>
                       </div>
                       <select value={client.status} onChange={(e) => { e.stopPropagation(); schimbaStatus(client.id, e.target.value); }}
                         style={{ ...statusStyle[client.status], border: "none", outline: "none", borderRadius: 20, padding: "5px 8px", fontSize: 11, fontWeight: 700, maxWidth: 120 }}>
@@ -443,6 +489,9 @@ export default function Clienti() {
                           <input style={input} value={editForm.email || ""} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} placeholder="Email" />
                           <input style={input} value={editForm.buget || ""} onChange={(e) => setEditForm({ ...editForm, buget: e.target.value })} placeholder="Buget" />
                           <input style={input} value={editForm.interes || ""} onChange={(e) => setEditForm({ ...editForm, interes: e.target.value })} placeholder="Interes" />
+                          <select style={input} value={editForm.tranzactie || "Vânzare"} onChange={(e) => setEditForm({ ...editForm, tranzactie: e.target.value })}>
+                            {TRANZACTII.map((t) => <option key={t}>{t}</option>)}
+                          </select>
                           <input style={input} value={editForm.zona || ""} onChange={(e) => setEditForm({ ...editForm, zona: e.target.value })} placeholder="Zonă" />
                           <select style={input} value={editForm.sursa || ""} onChange={(e) => setEditForm({ ...editForm, sursa: e.target.value })}>
                             <option value="">Sursă</option>
@@ -454,6 +503,7 @@ export default function Clienti() {
                           <div><span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>Telefon</span><div style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 600 }}>{client.telefon}</div></div>
                           <div><span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>Email</span><div style={{ fontSize: 13, color: "var(--text-secondary)" }}>{client.email}</div></div>
                           <div><span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>Interes</span><div style={{ fontSize: 13, color: "var(--text-primary)" }}>{client.interes || "—"}</div></div>
+                          <div><span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>Tip tranzacție</span><div style={{ fontSize: 13, color: "var(--text-primary)" }}><span style={{ ...(tranzactieStyle[client.tranzactie] || {}), padding: "2px 8px", borderRadius: 20, fontSize: 11, fontWeight: 700 }}>{client.tranzactie || "Vânzare"}</span></div></div>
                           <div><span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>Buget</span><div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>{client.buget || "—"}</div></div>
                           <div><span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>Sursă</span><div style={{ fontSize: 13, color: "var(--text-secondary)" }}>{client.sursa || "—"}</div></div>
                           <div><span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>Ultima interacțiune</span><div style={{ fontSize: 13, color: "var(--text-secondary)" }}>{client.ultimaInteractiune || "—"}</div></div>
@@ -512,6 +562,9 @@ export default function Clienti() {
                       <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{client.nume}</div>
                       <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 3 }}>{client.telefon}</div>
                       <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 2 }}>{client.interes || "—"}</div>
+                      <div style={{ marginTop: 4 }}>
+                        <span style={{ ...(tranzactieStyle[client.tranzactie] || {}), fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20 }}>{client.tranzactie || "Vânzare"}</span>
+                      </div>
                       <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 4 }}>
                         Adăugat de {client.createdByName || "—"}
                         {client.updatedByName && client.updatedByName !== client.createdByName ? ` · Modificat de ${client.updatedByName}` : ""}

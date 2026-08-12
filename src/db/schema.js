@@ -36,6 +36,7 @@ export const clienti = pgTable("clienti", {
   buget: text("buget"),
   interes: text("interes"),
   zona: text("zona"),
+  tranzactie: text("tranzactie").default("Vânzare"),
   status: text("status").default("Nou"),
   sursa: text("sursa"),
   ultimaInteractiune: text("ultima_interactiune"),

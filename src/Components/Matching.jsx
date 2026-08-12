@@ -68,6 +68,7 @@ export default function Matching() {
       buget: c.buget || "",
       interes: c.interes || "",
       zona: c.zona || "",
+      tranzactie: c.tranzactie || "Vânzare",
     }));
 
     const pLimit = propDisponibile.slice(0, 60).map((p) => ({
@@ -89,9 +90,9 @@ export default function Matching() {
     }
 
     const system = `Ești un motor inteligent de potrivire imobiliară pentru o agenție din România.
-Primești o listă de clienți (cu buget, interes și zonă) și o listă de proprietăți disponibile.
+Primești o listă de clienți (cu buget, interes, zonă și tipul tranzacției) și o listă de proprietăți disponibile.
 Pentru FIECARE client, alege cele mai potrivite proprietăți (maxim 3) care se potrivesc cu bugetul, tipul dorit și zona.
-Ține cont de: buget (prețul să fie apropiat sau sub buget), tipul de proprietate cerut în "interes", zona dorită.
+Ține cont de: buget (prețul să fie apropiat sau sub buget), tipul de proprietate cerut în "interes", zona dorită, și ca tipul tranzacției proprietății să coincidă cu cel al clientului ("Vânzare" vs "Închiriere").
 Returnează STRICT un singur obiect JSON, fără alt text, cu următoarea structură:
 { "<id_client>": [ { "proprietateId": "<id_proprietate>", "score": <număr 0-100>, "motiv": "<o frază scurtă în română care explică de ce se potrivește>" } ] }
 Dacă un client nu are nicio potrivire relevantă, folosește un array gol pentru el. Nu adăuga markdown, nu adăuga comentarii, doar JSON.`;
