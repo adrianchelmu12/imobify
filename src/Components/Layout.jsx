@@ -409,8 +409,9 @@ export default function Layout() {
     if (orgsLoaded && userMemberships?.data?.length > 0 && !orgAutoSelected.current) {
       orgAutoSelected.current = true;
       const firstOrg = userMemberships.data[0].organization;
-      setActive({ organization: firstOrg.id }).then(() => {
-        syncOrgToDb(firstOrg.id, firstOrg.name);
+      setActive({ organization: firstOrg.id }).then(async () => {
+        await syncOrgToDb(firstOrg.id, firstOrg.name);
+        await fetchMyRole(() => getToken({ template: "api" }));
         syncAllStores();
         syncAgenti();
       }).catch(() => {});
