@@ -17,6 +17,7 @@ import Documente from "./Components/Documente";
 import Comisioane from "./Components/Comisioane";
 import Taskuri from "./Components/Taskuri";
 import AiAssistant from "./Components/AiAssistant";
+import Matching from "./Components/Matching";
 import Rapoarte from "./Components/Rapoarte";
 import SetariLanding from "./Components/SetariLanding";
 
@@ -85,6 +86,7 @@ export default function App() {
           <Route path="comisioane" element={<Comisioane />} />
           <Route path="taskuri" element={<Taskuri />} />
           <Route path="ai-assistant" element={<AiAssistant />} />
+          <Route path="matching" element={<Matching />} />
           <Route path="rapoarte" element={<Rapoarte />} />
           <Route path="setari-landing" element={<SetariLanding />} />
         </Route>

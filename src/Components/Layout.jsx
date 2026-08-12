@@ -21,6 +21,7 @@ import {
   HiOutlineDocumentDuplicate,
   HiOutlineBanknotes,
   HiOutlineSparkles,
+  HiOutlineArrowsRightLeft,
   HiOutlinePresentationChartBar,
   HiOutlineChevronDown,
   HiOutlineUserCircle,
@@ -59,6 +60,7 @@ const NAV_SECTIONS = [
     items: [
       { label: "Task-uri", icon: HiOutlineClipboardDocumentList, href: "/admin/taskuri" },
       { label: "AI Assistant", icon: HiOutlineSparkles, href: "/admin/ai-assistant" },
+      { label: "Matching AI", icon: HiOutlineArrowsRightLeft, href: "/admin/matching" },
     ],
   },
   {
