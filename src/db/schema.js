@@ -13,7 +13,7 @@ export const agenti = pgTable("agenti", {
   id: bigint("id", { mode: "number" }).primaryKey(),
   orgId: text("org_id").notNull(),
   orgShortId: text("org_short_id"),
-  userId: text("user_id").notNull(),
+  userId: text("user_id"),
   nume: text("nume").notNull(),
   telefon: text("telefon"),
   email: text("email"),

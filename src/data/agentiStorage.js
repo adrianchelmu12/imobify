@@ -13,6 +13,7 @@ export async function addAgent(agent) {
     email: agent.email || "",
     poza: agent.poza || "",
     zone: agent.zone || "",
+    rol: agent.rol || "agent",
   });
 }
 
