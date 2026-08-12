@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { getUnreadCount, getUnread, markAsRead, markAllAsRead, sterge, genereazaNotificari, getAll } from "../data/notificariStore";
+import { getUnreadCount, getUnread, markAsRead, markAllAsRead, sterge, stergeTot, genereazaNotificari, getAll } from "../data/notificariStore";
 import {
   HiOutlineBell,
   HiOutlineBellAlert,
@@ -198,6 +198,28 @@ export default function NotificationBell({ position = "bottom" }) {
                 }}
               >
                 Marchează tot citit
+              </button>
+            )}
+            {list.length > 0 && (
+              <button
+                type="button"
+                onClick={() => { stergeTot(); refresh(); }}
+                title="Șterge toate notificările"
+                style={{
+                  border: "none",
+                  background: "rgba(239,68,68,0.15)",
+                  color: "#fca5a5",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  padding: "5px 10px",
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                }}
+              >
+                <HiOutlineTrash size={13} /> Șterge tot
               </button>
             )}
           </div>

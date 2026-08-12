@@ -44,6 +44,11 @@ export function sterge(id) {
   window.dispatchEvent(new CustomEvent("notificari:update"));
 }
 
+export function stergeTot() {
+  getAll().forEach((n) => store.delete(n.id));
+  window.dispatchEvent(new CustomEvent("notificari:update"));
+}
+
 export async function syncNotificari() {
   return store.sync();
 }
