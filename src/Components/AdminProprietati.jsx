@@ -448,12 +448,12 @@ export default function AdminProprietati() {
                   <td style={{ padding: "13px 14px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <img loading="lazy" src={(item.imagini || item.fotografii)?.[0] || item.imagine || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=80"} alt={item.titlu} style={{ width: 58, height: 42, objectFit: "cover", borderRadius: 8, flexShrink: 0 }} />
-                      <div><div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>{item.titlu}</div><div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 2 }}>{item.tip} · {item.tranzactie}</div><div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 4 }}>Adăugat de {item.createdByName || "—"}{item.updatedByName && item.updatedByName !== item.createdByName ? ` · Modificat de ${item.updatedByName}` : ""}</div></div>
+                      <div><div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>{item.titlu}</div><div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 2 }}>{item.tip} · {item.tranzactie || (item.tipTranzactie === "inchiriere" ? "Închiriere" : "Vânzare")}</div><div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 4 }}>Adăugat de {item.createdByName || "—"}{item.updatedByName && item.updatedByName !== item.createdByName ? ` · Modificat de ${item.updatedByName}` : ""}</div></div>
                     </div>
                   </td>
-                  <td style={{ padding: "13px 14px", fontSize: 12, color: "var(--text-secondary)" }}>{item.locatie}</td>
+                  <td style={{ padding: "13px 14px", fontSize: 12, color: "var(--text-secondary)" }}>{item.locatie || (typeof item.adresa === "object" && item.adresa ? [item.adresa.cartier, item.adresa.oras || item.adresa.localitate].filter(Boolean).join(", ") : "") || "—"}</td>
                   <td style={{ padding: "13px 14px", fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>{item.pret}</td>
-                  <td style={{ padding: "13px 14px", fontSize: 12, color: "var(--text-secondary)" }}>{item.camere} camere · {item.suprafata} m²</td>
+                  <td style={{ padding: "13px 14px", fontSize: 12, color: "var(--text-secondary)" }}>{(item.camere ?? item.caracteristici?.nr_camere) || "—"} camere · {(item.suprafata ?? item.caracteristici?.suprafata_utila) || "—"} m²</td>
                   <td style={{ padding: "13px 14px" }}>
                     <span style={{ padding: "4px 9px", borderRadius: 999, fontSize: 11, fontWeight: 600,
                       background: item.status === "activ" ? "var(--success-light)" : item.status === "vandut" ? "var(--danger-light)" : item.status === "inchiriat" ? "#eef2ff" : "var(--bg-secondary)",
